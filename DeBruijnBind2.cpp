@@ -240,28 +240,14 @@ struct tdepth
                  >
     {
         typedef typename tdepth::template apply<F>::type FDepth;
-//        typedef FDepth type;
-//        typedef typename boost::mpl::copy
-//                < Args
-//                , boost::mpl::back_inserter< boost::mpl::vector<> >
-//                >::type Args2;
-        typedef typename boost::mpl::transform< Args
-                                              , tdepth
-                                              >::type ArgsDepth;
-        typedef typename boost::mpl::copy
-                < ArgsDepth
-                , boost::mpl::back_inserter< boost::mpl::vector<> >
-                >::type ArgsDepth2;
-        typedef typename boost::mpl::max_element< ArgsDepth2
-                                                >::type MaxArgsDepth;
-//        typedef typename boost::mpl::max_element< ArgsDepth
-//                                                >::type MaxArgsDepth;
-//        typedef typename boost::mpl::max_element
-//                            < boost::mpl::transform_view
-//                                < Args2
-//                                , tdepth
-//                                >
-//                            >::type MaxArgsDepth;
+        typedef typename boost::mpl::deref
+                          < typename boost::mpl::max_element
+                            < boost::mpl::transform_view
+                                < Args
+                                , tdepth
+                                >
+                            >::type
+                          >::type  MaxArgsDepth;
         typedef typename boost::mpl::max< FDepth
                                         , MaxArgsDepth
                                         >::type type;
@@ -325,33 +311,28 @@ void f()
                      ));
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
                         < tdepth::apply< App< boost::mpl::void_
-//                                            , boost::fusion::vector
-//                                               < var<2,0>
-//                                               , var<2,0>
-//                                               >
-                                            , boost::mpl::vector
+                                            , boost::fusion::vector
                                                < var<2,0>
-                                               , var<2,0>
+                                               , var<4,0>
                                                >
                                             >
                                        >::type
-                        , boost::mpl::int_<1>
+                        , boost::mpl::int_<5>
                         >
                      ));
-//    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-//                        < tdepth::apply< Abs< 1
-//                                            , App< boost::mpl::void_
-//                                                 , boost::fusion::vector
-//                                                    < var<2,0>
-//                                                    , var<2,0>
-//                                                    >
-//                                                 >
-//                                            >
-//                                       >::type
-//                        , boost::mpl::int_<1>
-//                        >
-//                     ));
-    //TODO: left off here, need to test that application works.
+    BOOST_MPL_ASSERT(( boost::mpl::equal_to
+                        < tdepth::apply< Abs< 1
+                                            , App< boost::mpl::void_
+                                                 , boost::fusion::vector
+                                                    < var<2,0>
+                                                    , var<3,0>
+                                                    >
+                                                 >
+                                            >
+                                       >::type
+                        , boost::mpl::int_<3>
+                        >
+                     ));
 }
 
 
