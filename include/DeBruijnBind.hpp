@@ -544,7 +544,8 @@ struct Abs<0, AbsBody>
         -> decltype( reduce( boost::fusion::make_pair
                               < boost::mpl::int_<0> >
                               ( boost::fusion::make_vector() )
-                           , b
+//                           , b
+                           , *(AbsBody*)(0) //a workaround for msvc
                            )
                    )
     {
