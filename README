@@ -17,7 +17,9 @@ This is an alternate bind syntax that is both simpler and/or more powerful than
 other libraries I'm aware off. The use of De Bruijn indicies[1] makes this
 possible.
 
-[1] http://en.wikipedia.org/wiki/De_Bruijn_index
+[1] http://en.wikipedia.org/wiki/De_Bruijn_index The wikipedia page uses
+    uses 1 and up to refer the abstractions where we use 0 and up. So where
+    wikipedia uses λλ2, we would use λλ1.
 
 Grammar
 =======
