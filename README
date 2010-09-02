@@ -14,8 +14,10 @@ Purpose
 =======
 
 This is an alternate bind syntax that is both simpler and/or more powerful than
-other libraries I'm aware off. The use of De Bruijn indicies makes this
+other libraries I'm aware off. The use of De Bruijn indicies[1] makes this
 possible.
+
+[1] http://en.wikipedia.org/wiki/De_Bruijn_index
 
 Grammar
 =======
@@ -45,7 +47,7 @@ Variables have two ints, the first corresponds to which nested abstraction we're
 Examples
 ========
 
-In lambda and then De Bruijn indices[1].
+In lambda and then De Bruijn indices.
 
     id = λx. x = λ0
 
@@ -79,9 +81,6 @@ These terms can be directly translated into C++ code using this library.
                                       )
                                  )
                          );
-
-
-[1] http://en.wikipedia.org/wiki/De_Bruijn_index
 
 Compilation
 ===========
