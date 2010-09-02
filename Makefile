@@ -2,6 +2,7 @@ BOOST_PATH="C:\\Documents and Settings\\David J. Sankel\\My Documents\\Sankel So
 
 GPLUSPLUS=C:\\mingw-get-0.1-mingw32-alpha-3-bin\\bin\\g++
 # GPLUSPLUS=g++
+# See [1] for reasoning behind --enable-auto-import option.
 
 r: DeBruijnBind2.exe
 	$<
@@ -11,4 +12,5 @@ DeBruijnBind2.exe: DeBruijnBind2.cpp
 
 test:
 	$(GPLUSPLUS) -I$(BOOST_PATH) -Wl,--enable-auto-import -std=gnu++0x DeBruijnBind2.cpp -o DeBruijnBind2.exe
-# 	$(GPLUSPLUS) --version
+
+#[1] http://old.nabble.com/link-error---enable-auto-imports-for-details-td20734348.html

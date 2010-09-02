@@ -1,0 +1,29 @@
+The Visual C++ 2010 compiler crashes when compiling this code. See [1] and [2]
+for possible explanations. Versions of gcc prior to 4.5 also crash when
+compiling this code[3].
+
+Listed C++0x support for gcc and Visual C++ can be found here[4] and here[5]
+respectively.
+
+[1] https://svn.boost.org/trac/boost/ticket/4072
+[2] https://connect.microsoft.com/VisualStudio/feedback/details/548883
+[3] http://gcc.gnu.org/bugzilla/show_bug.cgi?id=38600
+[4] http://gcc.gnu.org/projects/cxx0x.html
+[5] http://blogs.msdn.com/b/vcblog/archive/2010/04/06/c-0x-core-language-features-in-vc10-the-table.aspx
+
+Todo
+====
+* Clean up the repository (separate files, etc).
+* Fix documentation at top of file (0 vs. 1 indexed) and perhaps move it here.
+* Ensure that when an abstraction is used like a function, that it disallows
+  parameters that have a tdepth > 0.
+* To make our eager evaluator consistant, the app function should reduce the
+  app if it has tdepth = 0.
+* Add more abstraction function call overloads  and app overloads (boost 
+  preprocessor?).
+
+Futher Out Todo
+===============
+* Add a lazy app (lapp) that only evaluates when absolutely required.
+* Make a separate file that includes first class functions that equate to
+  several of the commonly used operators.

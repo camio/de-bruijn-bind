@@ -10,14 +10,13 @@ expression not value = abstraction
 application = 'app(', expression, { ',', expression }, ')'
 variable = 'var<', int, ',', int, '>'
 
-value = any c++ value not in 
-int = digit non zero, {digit};
-digit = "0" | digit non zero;
-digit non zero = "1" | "2" | "3" ... "9";
+value = any c++ value that isn't a variable or a tdepth 0
+int = digit, {digit};
+digit = "0" | "1" | "2" | "3" ... "9";
 
 The abstraction here requires an int to declare how many arguments the newly created function has.
 
-Variables have two ints, the first corresponds to which nested abstraction we're referring to. 1 is inner most one and so on outward. The second int corresponds to which argument within the abstraction is being referred to.
+Variables have two ints, the first corresponds to which nested abstraction we're referring to. 0 is inner most one and so on outward. The second int corresponds to which argument within the abstraction is being referred to, 0 being the first.
 
 Examples
 ========
@@ -47,7 +46,12 @@ auto compose = abs<2>( abs<1>( app( var<2,1>()
                      );
 */
 
+//TODO: enable this for g++ compiler?
+//#define BOOST_RESULT_OF_USE_DECLTYPE
+
 #include <boost/mpl/int.hpp>
+#include <boost/mpl/apply.hpp>
+#include <boost/mpl/identity.hpp>
 #include <boost/mpl/copy.hpp>
 #include <boost/mpl/back_inserter.hpp>
 #include <boost/mpl/max.hpp>
@@ -56,10 +60,13 @@ auto compose = abs<2>( abs<1>( app( var<2,1>()
 #include <boost/mpl/max_element.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/equal_to.hpp>
+#include <boost/mpl/eval_if.hpp>
+#include <boost/mpl/if.hpp>
 
 #include <boost/type_traits/is_same.hpp> 
 
 #include <boost/fusion/include/mpl.hpp>
+#include <boost/fusion/include/fused.hpp>
 #include <boost/fusion/include/vector.hpp>
 #include <boost/fusion/include/transform.hpp>
 #include <boost/fusion/include/pair.hpp>
@@ -92,11 +99,13 @@ abs( AbsBody b )
     return Abs< numArgs_, AbsBody >( b );
 }
 
-template< typename F
-        , typename Args
+template< typename F_
+        , typename Args_
         >
 struct App
 {
+    typedef F_ F;
+    typedef Args_ Args;
     App( F f_, Args args_ )
         : f( f_ )
         , args( args_ )
@@ -117,6 +126,7 @@ struct SApp
     }
 } const sapp = SApp();
 
+//TODO: add more function call overloads here.
 struct App0
 {
     typedef App0 this_type;
@@ -141,73 +151,6 @@ struct App0
         return sapp( f, boost::fusion::make_vector( a1, a2 ) );
     }
 } const app = App0();
-
-/** TODO: left off here. I just defined AbsIn for an Abstraction that
- *        has a context. Continuing:
- *        - Make AbsIn handle variables (I think this is finished with
- *                                       an optimization for var<1,1>)
- *        - Make AbsIn handle abstraction (nested AbsIn or Abs? ) (done)
- *        - Make AbsIn handle values (done)
- *        - See if AbsIn and Abs can be joined. Note that Right now Abs doesn't
- *          handle application. (done)
- *
- *        - Make AbsIn handle application
- *        - Think about how to handle Abstractions that have no arguments. This
- *          is pretty neat actually. abs<0>
- */
-
-//struct ReduceApp
-//{
-//    /** Vars **/
-//    //f=var
-//    template< int depth
-//            , int argument
-//            , typename A1
-//            , typename A2
-//            >
-//    auto operator()( App< var<depth,argument>
-//                        , A1
-//                        , A2
-//                        , AppVoid
-//                        > a
-//                   )
-//        -> decltype( a )
-//    {
-//        return a;
-//    }
-//    //a1=var
-//    template< int depth
-//            , int argument
-//            , typename F
-//            , typename A2
-//            >
-//    auto operator()( App< F
-//                        , var<depth,argument>
-//                        , A2
-//                        , AppVoid
-//                        > a
-//                   )
-//        -> decltype( a )
-//    {
-//        return a;
-//    }
-//    //a2=var
-//    template< int depth
-//            , int argument
-//            , typename F
-//            , typename A1
-//            >
-//    auto operator()( App< F
-//                        , A1
-//                        , var<depth,argument>
-//                        , AppVoid
-//                        > a
-//                   )
-//        -> decltype( a )
-//    {
-//        return a;
-//    }
-//};
 
 /** tdepth type function **/
 struct tdepth
@@ -263,7 +206,7 @@ struct tdepth
                 >
          : boost::mpl::max< boost::mpl::int_< 0 >
                           , boost::mpl::minus
-                             < typename tdepth::template apply<AbsBody>::type
+                             < typename boost::mpl::apply< tdepth, AbsBody >::type
                              , boost::mpl::int_< 1 >
                              >
                           >
@@ -271,7 +214,7 @@ struct tdepth
     };
 };
 
-void f()
+static void testTDepth()
 {
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
                         < tdepth::apply< var<3,0> >::type
@@ -335,10 +278,31 @@ void f()
                      ));
 }
 
+struct reduce_App
+{
+    template< typename App >
+    auto operator()( App a ) const
+        -> decltype( boost::fusion::fused< decltype(a.f) >( a.f )( a.args ) )
+    {
+        //TODO: add static assertion here that tdepth( App ) = 0
+        return boost::fusion::fused< decltype(a.f) >( a.f )( a.args );
+    }
+};
+
+struct keep_App
+{
+    template< typename App>
+    App operator()( App a ) const
+    {
+        return a;
+    }
+};
 
 struct Reduce
 {
     /** Vars **/
+    //TODO: I'm not sure why the var handler selection works so well, but
+    //      I'd like to know.
     template< int depth
             , int argument
             , typename Context
@@ -417,7 +381,30 @@ struct Reduce
                        , Args
                        > a
                   ) const
-        -> bool
+        -> decltype
+        ( typename boost::mpl::if_
+            < boost::mpl::equal_to
+                            < typename boost::mpl::apply< tdepth
+                                                        , decltype( sapp( reduce( c, a.f )
+                                                                        , boost::fusion::transform
+                                                                                ( a.args
+                                                                                , creduce( c )
+                                                                                )
+                                                                        )
+                                                                  )
+                                                        >::type
+                            , boost::mpl::int_<0>
+                            >
+            , reduce_App
+            , keep_App
+            >::type()( sapp( reduce( c, a.f )
+                           , boost::fusion::transform
+                                   ( a.args
+                                   , creduce( c )
+                                   )
+                           )
+                     )
+        )
     {
         auto a2 = sapp( reduce( c, a.f )
                       , boost::fusion::transform
@@ -425,7 +412,17 @@ struct Reduce
                             , creduce( c )
                             )
                       );
-        return true;
+        typedef typename boost::mpl::if_
+            < boost::mpl::equal_to
+               < typename boost::mpl::apply< tdepth
+                                           , decltype( a2 )
+                                           >::type
+               , boost::mpl::int_<0>
+               >
+            , reduce_App
+            , keep_App
+            >::type AppReduction;
+        return AppReduction()( a2 );
     }
 } const reduce = Reduce();
 
@@ -436,14 +433,29 @@ struct CReduce1
         : c( c_ )
     {
     }
+
+    typedef CReduce1<Context> this_type;
+
+    //This result struct is needed for visual c++ 2010 support. :(
+    template< typename T >
+    struct result;
+    template< typename Arg >
+    struct result< this_type( Arg ) >
+    {
+        typedef typename boost::remove_reference<Arg>::type Arg2;
+        typedef decltype( reduce( *(Context*)(0), *(Arg2*)(0) ) ) type;
+    };
+
     Context c;
     template< typename Arg >
-    auto operator()( const Arg & a )
+    auto operator()( const Arg & a ) const
         -> decltype( reduce( c, a ) )
     {
         return reduce( c, a );
     }
 };
+/**creduce is a curried version of reduce
+ */
 struct CReduce0
 {
     template< typename Context >
@@ -455,9 +467,7 @@ struct CReduce0
     }
 } const creduce = CReduce0();
 
-
-//TODO: make this handle multiple numArgs arguments. Add a static_assert
-//      in the operator() overloads.
+//TODO: Add more overloads for extra arguments (use boost preprocessor)
 template< int numArgs_
         , typename AbsBody
         >
@@ -468,6 +478,7 @@ struct Abs
     {
     }
     AbsBody b;
+
     template< typename A1 >
     auto operator()( A1 a1 ) const
         -> decltype( reduce( boost::fusion::make_pair
@@ -486,8 +497,65 @@ struct Abs
                      , b
                      );
     }
+    template< typename A1
+            , typename A2
+            >
+    auto operator()( A1 a1
+                   , A2 a2
+                   ) const
+        -> decltype( reduce( boost::fusion::make_pair
+                              < boost::mpl::int_<0> >
+                              ( boost::fusion::make_vector( a1
+                                                          , a2
+                                                          )
+                              )
+                           , b
+                           )
+                   )
+    {
+        static_assert( numArgs_ == 2
+                     , "Calling abstraction with incorrect number of arguments"
+                     );
+        return reduce( boost::fusion::make_pair
+                        < boost::mpl::int_<0> >
+                        ( boost::fusion::make_vector( a1
+                                                    , a2
+                                                    )
+                        )
+                     , b
+                     );
+    }
 };
+/* Abs<0,AbsBody> needs to be specialized because its
+ * operator() is not a template function and therefore will
+ * always be instanciated.
+ */
+template< typename AbsBody
+        >
+struct Abs<0, AbsBody>
+{
+    typedef Abs<0,AbsBody> this_type;
+    Abs( AbsBody b_ ) : b( b_ )
+    {
+    }
+    AbsBody b;
 
+    auto operator()() const
+        -> decltype( reduce( boost::fusion::make_pair
+                              < boost::mpl::int_<0> >
+                              ( boost::fusion::make_vector() )
+                           , b
+                           )
+                   )
+    {
+        return reduce( boost::fusion::make_pair
+                        < boost::mpl::int_<0> >
+                        ( boost::fusion::make_vector() )
+                     , b
+                     );
+    }
+
+};
 
 #include <iostream>
 
@@ -496,27 +564,52 @@ int minus( int a, int b )
     return a - b;
 }
 
+int times2( int a )
+{
+    return a*2;
+}
+
+int times3( int a )
+{
+    return a*3;
+}
+
 int main()
 {
     auto id = abs<1>( var<0,0>() );
     auto always33 = abs<1>( 33 );
     auto const_ = abs<1>( abs<1>( var<1,0>() ) );
-//    auto flip   = abs<1>( abs<2>( app( var<2,1>()
-//                                     , var<1,2>()
-//                                     , var<1,1>()
-//                                     )
-//                                )
-//                        );
-
     auto minusTwelve = abs<1>( app( minus
                                   , var<0,0>()
                                   , 12
                                   )
                              );
 
+    auto flip   = abs<1>( abs<2>( app( var<1,0>()
+                                     , var<0,1>()
+                                     , var<0,0>()
+                                     )
+                                )
+                        );
+
+    auto compose = abs<2>( abs<1>( app( var<1,0>()
+                                      , app( var<1,1>()
+                                           , var<0,0>()
+                                           )
+                                      )
+                                 )
+                         );
+    auto negFour = abs<0>( app( times2
+                              , app( minus, 2, 4 )
+                              )
+                         );
+
     std::cout << id( "a" )
               << '\n' << always33( "asdf" )
               << '\n' << const_( "asdf" )( 12 )
-              << '\n' << minusTwelve( 0 )
+              << '\n' << minusTwelve( 24 )
+              << '\n' << flip( minus )( 10, 2 )
+              << '\n' << compose( times2, times3 )( 4 )
+              << '\n' << negFour()
               << '\n';
 }
