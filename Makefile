@@ -4,13 +4,15 @@ GPLUSPLUS=C:\\mingw-get-0.1-mingw32-alpha-3-bin\\bin\\g++
 # GPLUSPLUS=g++
 # See [1] for reasoning behind --enable-auto-import option.
 
-r: DeBruijnBind2.exe
+r: bin/main.exe
 	$<
 
-DeBruijnBind2.exe: DeBruijnBind2.cpp
-	cl -EHsc -I$(BOOST_PATH) $<
+all: bin/main.exe
 
-test:
-	$(GPLUSPLUS) -I$(BOOST_PATH) -Wl,--enable-auto-import -std=gnu++0x DeBruijnBind2.cpp -o DeBruijnBind2.exe
+bin/main.exe: src/main.cpp include/DeBruijnBind.hpp
+	$(GPLUSPLUS) -Iinclude -I$(BOOST_PATH) -Wl,--enable-auto-import -std=gnu++0x src/main.cpp -o bin/main.exe
+
+bin/main-vc.exe: src/main.cpp include/DeBruijnBind.hpp
+	cl -EHsc -Iinclude -I$(BOOST_PATH) src/main.cpp -Febin/main-vc.exe
 
 #[1] http://old.nabble.com/link-error---enable-auto-imports-for-details-td20734348.html

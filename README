@@ -1,3 +1,9 @@
+Source
+======
+I use unicode in the source and here. ... is the font I'm using.
+
+Compilation
+===========
 The Visual C++ 2010 compiler crashes when compiling this code. See [1] and [2]
 for possible explanations. Versions of gcc prior to 4.5 also crash when
 compiling this code[3].
