@@ -40,9 +40,13 @@ Using EBNF here.
 
     digit = "0" | "1" | "2" | "3" ... "9";
 
-The abstraction here requires an int to declare how many arguments the newly created function has.
+The abstraction here requires an int to declare how many arguments the newly
+created function has.
 
-Variables have two ints, the first corresponds to which nested abstraction we're referring to. 0 is inner most one and so on outward. The second int corresponds to which argument within the abstraction is being referred to, 0 being the first.
+Variables have two ints, the first corresponds to which nested abstraction we're
+referring to. 0 is inner most one and so on outward. The second int corresponds
+to which argument within the abstraction is being referred to, 0 being the
+first.
 
 Examples
 ========
