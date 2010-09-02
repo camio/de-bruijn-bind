@@ -1,6 +1,87 @@
-Source
-======
-I use unicode in the source and here. ... is the font I'm using.
+Preliminaries
+=============
+
+I use unicode in the source and here. DejaVu Sans Mono[1] is the font I'm using.
+
+[1] http://dejavu-fonts.org/wiki/Main_Page
+
+The code compiles with g++ 4.5 and above. See below for more compilation notes.
+
+I've written the code in a way that permits direct reading. So, after reading
+this file, DeBruijnBind.hpp would be the next file to read.
+
+Purpose
+=======
+
+This is an alternate bind syntax that is both simpler and/or more powerful than
+other libraries I'm aware off. The use of De Bruijn indicies makes this
+possible.
+
+Grammar
+=======
+Using EBNF here.
+
+    abstraction = 'abs<', int, '>', '(', expression, ')';
+
+    expression = abstraction
+               | application
+               | value
+               | variable;
+
+    application = 'app(', expression, { ',', expression }, ')';
+
+    variable = 'var<', int, ',', int, '>';
+
+    value = any c++ value that isn't a variable or a tdepth 0;
+
+    int = digit, {digit};
+
+    digit = "0" | "1" | "2" | "3" ... "9";
+
+The abstraction here requires an int to declare how many arguments the newly created function has.
+
+Variables have two ints, the first corresponds to which nested abstraction we're referring to. 0 is inner most one and so on outward. The second int corresponds to which argument within the abstraction is being referred to, 0 being the first.
+
+Examples
+========
+
+In lambda and then De Bruijn indices[1].
+
+    id = λx. x = λ0
+
+    const = λx.λy.x = λλ1
+
+    compose = λx.λy.λz.x(y(z)) = λλλ2(1(0))
+
+For flip, I'm introducing subscripts on abstractions (λ) to indicate the
+number of arguments. For the variables (1,2,etc.) I use a subscript to indicate
+which argument of the abstraction it refers to.
+
+    flip = λx.λ(y,z).x(z,y) = λ₁λ₂1(0₁, 1₀)
+
+These terms can be directly translated into C++ code using this library.
+
+    auto id = abs<1>( var<0,0>() );
+
+    auto const_ = abs<1>( abs<1>( var<1,0>() ) );
+
+    auto flip   = abs<1>( abs<2>( app( var<1,0>()
+                                     , var<0,1>()
+                                     , var<0,0>()
+                                     )
+                                )
+                        );
+
+    auto compose = abs<2>( abs<1>( app( var<1,0>()
+                                      , app( var<1,1>()
+                                           , var<0,0>()
+                                           )
+                                      )
+                                 )
+                         );
+
+
+[1] http://en.wikipedia.org/wiki/De_Bruijn_index
 
 Compilation
 ===========
@@ -19,14 +100,13 @@ respectively.
 
 Todo
 ====
-* Clean up the repository (separate files, etc).
-* Fix documentation at top of file (0 vs. 1 indexed) and perhaps move it here.
 * Ensure that when an abstraction is used like a function, that it disallows
   parameters that have a tdepth > 0.
 * To make our eager evaluator consistant, the app function should reduce the
   app if it has tdepth = 0.
-* Add more abstraction function call overloads  and app overloads (boost 
+* Add more abstraction function call overloads and app overloads (boost 
   preprocessor?).
+* Backport to C++-98.
 
 Futher Out Todo
 ===============

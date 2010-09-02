@@ -1,50 +1,5 @@
-/*
-Grammar
-=======
-abstraction = 'abs<', int, '>', '(', expression, ')';
-expression not value = abstraction
-                     | application
-                     | value
-                     | variable
-
-application = 'app(', expression, { ',', expression }, ')'
-variable = 'var<', int, ',', int, '>'
-
-value = any c++ value that isn't a variable or a tdepth 0
-int = digit, {digit};
-digit = "0" | "1" | "2" | "3" ... "9";
-
-The abstraction here requires an int to declare how many arguments the newly created function has.
-
-Variables have two ints, the first corresponds to which nested abstraction we're referring to. 0 is inner most one and so on outward. The second int corresponds to which argument within the abstraction is being referred to, 0 being the first.
-
-Examples
-========
-
-In lambda and then De Bruijn terms
-
-id = λx. x = λ1
-const = λx.λy.x = λλ2
-flip = λx.λ(y,z).x(z,y) = λλ2(1₂, 1₁)
-compose = λx.λy.λz.x(y(z)) = λλλ3(2(1))
-
-
-auto id = abs<1>( var<1,1>() );
-auto const_ = abs<1>( abs<1>( var<2,1>() ) );
-auto flip   = abs<1>( abs<2>( app( var<2,1>()
-                                 , var<1,2>()
-                                 , var<1,1>()
-                                 )
-                            )
-                    );
-auto compose = abs<2>( abs<1>( app( var<2,1>()
-                                  , app( var<2,2>()
-                                       , var<1,1>()
-                                       )
-                                  )
-                             )
-                     );
-*/
+#ifndef DEBRUIJNBIND_HPP_
+#define DEBRUIJNBIND_HPP_
 
 //TODO: enable this for g++ compiler?
 //#define BOOST_RESULT_OF_USE_DECLTYPE
@@ -76,6 +31,8 @@ auto compose = abs<2>( abs<1>( app( var<2,1>()
 #include <boost/fusion/include/push_front.hpp>
 #include <boost/type_traits/remove_reference.hpp>
 
+/** variables, abstractions, and applications make up our grammar.
+ */
 template< int depth_
         , int argument_
         >
@@ -99,6 +56,8 @@ abs( AbsBody b )
     return Abs< numArgs_, AbsBody >( b );
 }
 
+//For application, we're encoding the arguments as a fusion
+//sequence.
 template< typename F_
         , typename Args_
         >
@@ -115,6 +74,7 @@ struct App
     Args args;
 };
 
+//sapp creates an application AST based on a fusion sequence.
 struct SApp
 {
     template< typename F, typename Args >
@@ -126,6 +86,8 @@ struct SApp
     }
 } const sapp = SApp();
 
+/** app creates an application AST based on multiple arguments.
+ */
 //TODO: add more function call overloads here.
 struct App0
 {
@@ -152,7 +114,24 @@ struct App0
     }
 } const app = App0();
 
-/** tdepth type function **/
+/** tdepth type function
+ *
+ *  This takes an instance of our grammar and returns the number of 
+ *  abstractions it requires to be evaluated.
+ *
+ *  Assuming αᵢ varies over variables, v varies over values, and e,f over
+ *  expressions.
+ *
+ *  tdepth( v ) = 0
+ *  tdepth( α ) = α + 1
+ *  tdepth( λ.e ) = max( tdepth( e ) - 1, 0 )
+ *  tdepth( f(e) ) = max( tdepth( f ), tdepth( e ) )
+ *
+ *  The following code extends this to our grammer which allows multiple
+ *  arguments.
+ *
+ *  See src/test.cpp for testing of this function.
+ **/
 struct tdepth
 {
     /** Value **/
@@ -214,70 +193,11 @@ struct tdepth
     };
 };
 
-static void testTDepth()
-{
-    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< var<3,0> >::type
-                        , boost::mpl::int_<4>
-                        >
-                     ));
-    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< int >::type
-                        , boost::mpl::int_<0>
-                        >
-                     ));
-    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< Abs<1, var<0,0> >
-                                       >::type
-                        , boost::mpl::int_<0>
-                        >
-                     ));
-    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< Abs< 1
-                                            , Abs< 1
-                                                 , var<0,0>
-                                                 >
-                                            >
-                                       >::type
-                        , boost::mpl::int_<0>
-                        >
-                     ));
-    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< Abs< 1
-                                            , Abs< 1
-                                                 , var<2,0>
-                                                 >
-                                            >
-                                       >::type
-                        , boost::mpl::int_<1>
-                        >
-                     ));
-    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< App< boost::mpl::void_
-                                            , boost::fusion::vector
-                                               < var<2,0>
-                                               , var<4,0>
-                                               >
-                                            >
-                                       >::type
-                        , boost::mpl::int_<5>
-                        >
-                     ));
-    BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< Abs< 1
-                                            , App< boost::mpl::void_
-                                                 , boost::fusion::vector
-                                                    < var<2,0>
-                                                    , var<3,0>
-                                                    >
-                                                 >
-                                            >
-                                       >::type
-                        , boost::mpl::int_<3>
-                        >
-                     ));
-}
+/** The following two functions are helpers for the reduce function.
+ */
 
+/** This function takes a tdepth=0 App and runs the function on the arguments
+ */
 struct reduce_App
 {
     template< typename App >
@@ -289,6 +209,8 @@ struct reduce_App
     }
 };
 
+/** This function takes an App simply returns it.
+ */
 struct keep_App
 {
     template< typename App>
@@ -298,6 +220,13 @@ struct keep_App
     }
 };
 
+/** The reduce function takes an instance of our grammer and a fusion pair
+ *  of an integer (representing the depth of the binding) and a fusion
+ *  sequence representing the arguments being bound.
+ *
+ *  The result is the term with the substituted variable and any function
+ *  applications done that can now be executed.
+ */
 struct Reduce
 {
     /** Vars **/
@@ -406,6 +335,8 @@ struct Reduce
                      )
         )
     {
+        //Reduce f, all the arguments, and then see if we can execute
+        //f at this point.
         auto a2 = sapp( reduce( c, a.f )
                       , boost::fusion::transform
                             ( a.args
@@ -426,6 +357,8 @@ struct Reduce
     }
 } const reduce = Reduce();
 
+/**creduce is a curried version of reduce
+ */
 template< typename Context >
 struct CReduce1
 {
@@ -454,8 +387,6 @@ struct CReduce1
         return reduce( c, a );
     }
 };
-/**creduce is a curried version of reduce
- */
 struct CReduce0
 {
     template< typename Context >
@@ -479,6 +410,7 @@ struct Abs
     }
     AbsBody b;
 
+    //Abstraction terms can accept arguments and we do so below.
     template< typename A1 >
     auto operator()( A1 a1 ) const
         -> decltype( reduce( boost::fusion::make_pair
@@ -557,3 +489,5 @@ struct Abs<0, AbsBody>
     }
 
 };
+
+#endif
