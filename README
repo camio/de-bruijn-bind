@@ -17,9 +17,7 @@ This is an alternate bind syntax that is both simpler and/or more powerful than
 other libraries I'm aware off. The use of De Bruijn indicies[1] makes this
 possible.
 
-[1] http://en.wikipedia.org/wiki/De_Bruijn_index The wikipedia page uses
-    uses 1 and up to refer the abstractions where we use 0 and up. So where
-    wikipedia uses λλ2, we would use λλ1.
+[1] http://en.wikipedia.org/wiki/De_Bruijn_index
 
 Grammar
 =======
@@ -34,20 +32,24 @@ Using EBNF here.
 
     application = 'app(', expression, { ',', expression }, ')';
 
-    variable = 'var<', int, ',', int, '>';
+    variable = 'var<', int non zero, ',', int non zero, '>';
 
     value = any c++ value that isn't a variable or a tdepth 0;
 
     int = digit, {digit};
 
-    digit = "0" | "1" | "2" | "3" ... "9";
+    int non zero = digit non zero, {digit};
+
+    digit = "0" | digit non zero;
+
+    digit non zero = "1" | "2" | "3" ... "9";
 
 The abstraction here requires an int to declare how many arguments the newly
 created function has.
 
 Variables have two ints, the first corresponds to which nested abstraction we're
-referring to. 0 is inner most one and so on outward. The second int corresponds
-to which argument within the abstraction is being referred to, 0 being the
+referring to. 1 is inner most one and so on outward. The second int corresponds
+to which argument within the abstraction is being referred to, 1 being the
 first.
 
 Examples
@@ -55,34 +57,34 @@ Examples
 
 In lambda and then De Bruijn indices.
 
-    id = λx. x = λ0
+    id = λx. x = λ1
 
-    const = λx.λy.x = λλ1
+    const = λx.λy.x = λλ2
 
-    compose = λx.λy.λz.x(y(z)) = λλλ2(1(0))
+    compose = λx.λy.λz.x(y(z)) = λλλ3(2(1))
 
 For flip, I'm introducing subscripts on abstractions (λ) to indicate the
 number of arguments. For the variables (1,2,etc.) I use a subscript to indicate
 which argument of the abstraction it refers to.
 
-    flip = λx.λ(y,z).x(z,y) = λ₁λ₂1(0₁, 1₀)
+    flip = λx.λ(y,z).x(z,y) = λ₁λ₂1(1₁, 2₀)
 
 These terms can be directly translated into C++ code using this library.
 
-    auto id = abs<1>( var<0,0>() );
+    auto id = abs<1>( var<1,1>() );
 
-    auto const_ = abs<1>( abs<1>( var<1,0>() ) );
+    auto const_ = abs<1>( abs<1>( var<2,1>() ) );
 
-    auto flip   = abs<1>( abs<2>( app( var<1,0>()
-                                     , var<0,1>()
-                                     , var<0,0>()
+    auto flip   = abs<1>( abs<2>( app( var<2,1>()
+                                     , var<1,2>()
+                                     , var<1,1>()
                                      )
                                 )
                         );
 
-    auto compose = abs<2>( abs<1>( app( var<1,0>()
-                                      , app( var<1,1>()
-                                           , var<0,0>()
+    auto compose = abs<2>( abs<1>( app( var<2,1>()
+                                      , app( var<2,2>()
+                                           , var<1,1>()
                                            )
                                       )
                                  )
@@ -105,6 +107,8 @@ respectively.
 
 Todo
 ====
+* Add a curry/uncurry example.
+* Rename abs to lam and var to arg.
 * Ensure that when an abstraction is used like a function, that it disallows
   parameters that have a tdepth > 0.
 * To make our eager evaluator consistant, the app function should reduce the

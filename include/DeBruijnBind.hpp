@@ -119,11 +119,11 @@ struct App0
  *  This takes an instance of our grammar and returns the number of 
  *  abstractions it requires to be evaluated.
  *
- *  Assuming αᵢ varies over variables, v varies over values, and e,f over
+ *  Assuming α varies over variables, v varies over values, and e,f over
  *  expressions.
  *
  *  tdepth( v ) = 0
- *  tdepth( α ) = α + 1
+ *  tdepth( α ) = α
  *  tdepth( λ.e ) = max( tdepth( e ) - 1, 0 )
  *  tdepth( f(e) ) = max( tdepth( f ), tdepth( e ) )
  *
@@ -145,10 +145,10 @@ struct tdepth
             , int argument
             >
     struct apply< var< depth
-                      , argument
-                      >
-                 >
-                 : boost::mpl::int_< depth + 1 >
+                     , argument
+                     >
+                >
+                : boost::mpl::int_< depth >
     {
     };
 
@@ -209,7 +209,7 @@ struct reduce_App
     }
 };
 
-/** This function takes an App simply returns it.
+/** This function takes an App and simply returns it.
  */
 struct keep_App
 {
@@ -241,9 +241,9 @@ struct Reduce
                                         > c
                   , var< depth, argument >
                   ) const
-        -> decltype( boost::fusion::at_c<argument>( c.second ) )
+        -> decltype( boost::fusion::at_c< argument - 1 >( c.second ) )
     {
-        return boost::fusion::at_c<argument>( c.second );
+        return boost::fusion::at_c< argument - 1 >( c.second );
     }
 
     template< int depth0
@@ -414,7 +414,7 @@ struct Abs
     template< typename A1 >
     auto operator()( A1 a1 ) const
         -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<0> >
+                              < boost::mpl::int_<1> >
                               ( boost::fusion::make_vector( a1 ) )
                            , b
                            )
@@ -424,7 +424,7 @@ struct Abs
                      , "Calling abstraction with too many arguments"
                      );
         return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<0> >
+                        < boost::mpl::int_<1> >
                         ( boost::fusion::make_vector( a1 ) )
                      , b
                      );
@@ -436,7 +436,7 @@ struct Abs
                    , A2 a2
                    ) const
         -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<0> >
+                              < boost::mpl::int_<1> >
                               ( boost::fusion::make_vector( a1
                                                           , a2
                                                           )
@@ -449,7 +449,7 @@ struct Abs
                      , "Calling abstraction with incorrect number of arguments"
                      );
         return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<0> >
+                        < boost::mpl::int_<1> >
                         ( boost::fusion::make_vector( a1
                                                     , a2
                                                     )
@@ -474,7 +474,7 @@ struct Abs<0, AbsBody>
 
     auto operator()() const
         -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<0> >
+                              < boost::mpl::int_<1> >
                               ( boost::fusion::make_vector() )
 //                           , b
                            , *(AbsBody*)(0) //a workaround for msvc
@@ -482,7 +482,7 @@ struct Abs<0, AbsBody>
                    )
     {
         return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<0> >
+                        < boost::mpl::int_<1> >
                         ( boost::fusion::make_vector() )
                      , b
                      );

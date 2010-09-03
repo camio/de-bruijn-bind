@@ -18,25 +18,25 @@ int times3( int a )
 
 int main()
 {
-    auto id = abs<1>( var<0,0>() );
+    auto id = abs<1>( var<1,1>() );
     auto always33 = abs<1>( 33 );
-    auto const_ = abs<1>( abs<1>( var<1,0>() ) );
+    auto const_ = abs<1>( abs<1>( var<2,1>() ) );
     auto minusTwelve = abs<1>( app( minus
-                                  , var<0,0>()
+                                  , var<1,1>()
                                   , 12
                                   )
                              );
 
-    auto flip   = abs<1>( abs<2>( app( var<1,0>()
-                                     , var<0,1>()
-                                     , var<0,0>()
+    auto flip   = abs<1>( abs<2>( app( var<2,1>()
+                                     , var<1,2>()
+                                     , var<1,1>()
                                      )
                                 )
                         );
 
-    auto compose = abs<2>( abs<1>( app( var<1,0>()
-                                      , app( var<1,1>()
-                                           , var<0,0>()
+    auto compose = abs<2>( abs<1>( app( var<2,1>()
+                                      , app( var<2,2>()
+                                           , var<1,1>()
                                            )
                                       )
                                  )
