@@ -30,6 +30,24 @@ boost::function<int (int)> curriedF( int i )
     return times2;
 }
 
+struct Iff
+{
+    template< typename A >
+    A operator()( bool c, A a1, A a2 ) const
+    {
+        return c ? a1 : a2;
+    }
+} const iff = Iff();
+
+struct Equals
+{
+    template< typename A >
+    bool operator()( const A a1, const A a2 ) const
+    {
+        return a1 == a2;
+    }
+} const equals = Equals();
+
 
 int main()
 {
@@ -76,6 +94,27 @@ int main()
                                  )
                          );
 
+    auto minusOne = lam<1>( app( minus
+                               , _1_1
+                               , 1
+                               )
+                          );
+
+    auto tst = fix( lam<1>( lam<1>( app( app( iff
+                                            , app( equals
+                                                 , _1_1
+                                                 , 0
+                                                 )
+                                            , const_( 1 )
+                                            , _2_1
+                                            )
+                                       , app( minusOne
+                                            , _1_1
+                                            )
+                                       )
+                                   )
+                          )
+                  );
     auto bug = lam<1>( lam<1>( lam<1>( 12 ) ) );
 //    bug( 1 );
 
