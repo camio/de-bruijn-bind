@@ -108,22 +108,13 @@ int main()
                                )
                           );
 
-//    auto tst = fix( lam<1>( lam<1>( app( app( iff
-//                                            , app( equals
-//                                                 , _1_1
-//                                                 , 0
-//                                                 )
-//                                            , const_( 1 )
-//                                            , _2_1
-//                                            )
-//                                       , app( minusOne
-//                                            , _1_1
-//                                            )
-//                                       )
-//                                   )
-//                          )
-//                  );
-    auto tst =      lam<1>( lam<1>( app( app( iff
+    //fix λ₁λ₁(iff( equals(1₁,0)
+    //            , const(1)
+    //            , 2₁
+    //            )
+    //        )
+    //        (minus1, 1₁)
+    auto tst = fix( lam<1>( lam<1>( app( app( iff
                                             , app( equals
                                                  , _1_1
                                                  , 0
@@ -137,8 +128,8 @@ int main()
                                        )
                                    )
                           )
-                   ;
-    tst( 0 );
+                  );
+    tst( 0 );// ⇒ 
     std::cout << id( "a" )
               << '\n' << always33( "asdf" )
               << '\n' << const_( "asdf" )( 12 )
