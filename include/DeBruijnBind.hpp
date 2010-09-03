@@ -36,7 +36,7 @@
 template< int depth_
         , int argument_
         >
-struct var
+struct arg
 {
     const static int depth = depth_;
     const static int argument = argument_;
@@ -51,7 +51,7 @@ template< int numArgs_
         , typename AbsBody
         >
 Abs< numArgs_, AbsBody >
-abs( AbsBody b )
+lam( AbsBody b )
 {
     return Abs< numArgs_, AbsBody >( b );
 }
@@ -144,7 +144,7 @@ struct tdepth
     template< int depth
             , int argument
             >
-    struct apply< var< depth
+    struct apply< arg< depth
                      , argument
                      >
                 >
@@ -230,7 +230,7 @@ struct keep_App
 struct Reduce
 {
     /** Vars **/
-    //TODO: I'm not sure why the var handler selection works so well, but
+    //TODO: I'm not sure why the arg handler selection works so well, but
     //      I'd like to know.
     template< int depth
             , int argument
@@ -239,7 +239,7 @@ struct Reduce
     auto operator()( boost::fusion::pair< boost::mpl::int_<depth>
                                         , Context
                                         > c
-                  , var< depth, argument >
+                  , arg< depth, argument >
                   ) const
         -> decltype( boost::fusion::at_c< argument - 1 >( c.second ) )
     {
@@ -254,7 +254,7 @@ struct Reduce
     auto operator()( boost::fusion::pair< boost::mpl::int_<depth0>
                                         , Context
                                         > c
-                  , var< depth1, argument1 > v
+                  , arg< depth1, argument1 > v
                   ) const
         -> decltype( v ) 
     {
@@ -282,7 +282,7 @@ struct Reduce
                                         > c
                   , Abs< numArgs, AbsBody > a
                   ) const
-        -> decltype( abs<numArgs>( reduce( boost::fusion::make_pair
+        -> decltype( lam<numArgs>( reduce( boost::fusion::make_pair
                                             < boost::mpl::int_<cdepth+1> >
                                             ( c.second )
                                          , a.b
@@ -290,7 +290,7 @@ struct Reduce
                                  )
                    )
     {
-        return abs<numArgs>( reduce( boost::fusion::make_pair
+        return lam<numArgs>( reduce( boost::fusion::make_pair
                                       < boost::mpl::int_<cdepth+1> >
                                       ( c.second )
                                    , a.b
@@ -421,7 +421,7 @@ struct Abs
                    )
     {
         static_assert( numArgs_ == 1
-                     , "Calling abstraction with too many arguments"
+                     , "Calling abstraction (lam) with too many arguments"
                      );
         return reduce( boost::fusion::make_pair
                         < boost::mpl::int_<1> >
@@ -446,7 +446,8 @@ struct Abs
                    )
     {
         static_assert( numArgs_ == 2
-                     , "Calling abstraction with incorrect number of arguments"
+                     , "Calling abstraction (lam) with incorrect number of "
+                       "arguments"
                      );
         return reduce( boost::fusion::make_pair
                         < boost::mpl::int_<1> >

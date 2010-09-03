@@ -33,50 +33,50 @@ boost::function<int (int)> curriedF( int i )
 
 int main()
 {
-    auto id = abs<1>( var<1,1>() );
-    auto always33 = abs<1>( 33 );
-    auto const_ = abs<1>( abs<1>( var<2,1>() ) );
-    auto minusTwelve = abs<1>( app( minus
-                                  , var<1,1>()
+    auto id = lam<1>( arg<1,1>() );
+    auto always33 = lam<1>( 33 );
+    auto const_ = lam<1>( lam<1>( arg<2,1>() ) );
+    auto minusTwelve = lam<1>( app( minus
+                                  , arg<1,1>()
                                   , 12
                                   )
                              );
 
-    auto flip   = abs<1>( abs<2>( app( var<2,1>()
-                                     , var<1,2>()
-                                     , var<1,1>()
+    auto flip   = lam<1>( lam<2>( app( arg<2,1>()
+                                     , arg<1,2>()
+                                     , arg<1,1>()
                                      )
                                 )
                         );
 
-    auto compose = abs<2>( abs<1>( app( var<2,1>()
-                                      , app( var<2,2>()
-                                           , var<1,1>()
+    auto compose = lam<2>( lam<1>( app( arg<2,1>()
+                                      , app( arg<2,2>()
+                                           , arg<1,1>()
                                            )
                                       )
                                  )
                          );
-    auto negFour = abs<0>( app( times2
+    auto negFour = lam<0>( app( times2
                               , app( minus, 2, 4 )
                               )
                          );
 
-    auto curry = abs<1>( abs<1>( abs<1>( app( var<3,1>()
-                                            , var<2,1>()
-                                            , var<1,1>()
+    auto curry = lam<1>( lam<1>( lam<1>( app( arg<3,1>()
+                                            , arg<2,1>()
+                                            , arg<1,1>()
                                             )
                                        )
                                )
                        );
-    auto uncurry = abs<1>( abs<2>( app( app( var<2,1>()
-                                           , var<1,1>()
+    auto uncurry = lam<1>( lam<2>( app( app( arg<2,1>()
+                                           , arg<1,1>()
                                            )
-                                      , var<1,2>()
+                                      , arg<1,2>()
                                       )
                                  )
                          );
 
-    auto bug = abs<1>( abs<1>( abs<1>( 12 ) ) );
+    auto bug = lam<1>( lam<1>( lam<1>( 12 ) ) );
 //    bug( 1 );
 
     std::cout << id( "a" )
