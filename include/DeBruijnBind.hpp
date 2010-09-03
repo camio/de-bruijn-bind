@@ -58,6 +58,26 @@ lam( AbsBody b )
     return Abs< numArgs_, AbsBody >( b );
 }
 
+template< typename FixBody_ >
+struct Fix
+{
+    typedef FixBody_ FixBody;
+    Fix( FixBody b_ )
+        : b( b_ )
+    {
+    }
+    FixBody b;
+};
+
+struct Fix0
+{
+    template< typename AbsBody >
+    Fix< Abs<1, AbsBody> > operator()( Abs< 1, AbsBody> b ) const
+    {
+        return Fix< Abs<1, AbsBody> >( b );
+    }
+} const fix = Fix0();
+
 //For application, we're encoding the arguments as a fusion
 //sequence.
 template< typename F_
