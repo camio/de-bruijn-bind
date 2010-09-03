@@ -420,6 +420,13 @@ struct Abs
                            )
                    )
     {
+        BOOST_MPL_ASSERT(( boost::mpl::equal_to
+                             < typename boost::mpl::apply< tdepth
+                                                         , decltype( a1 )
+                                                         >::type
+                             , boost::mpl::int_<0>
+                             >
+                        ));
         static_assert( numArgs_ == 1
                      , "Calling abstraction (lam) with too many arguments"
                      );
@@ -445,6 +452,21 @@ struct Abs
                            )
                    )
     {
+        //TODO: repeated code here, clean it up.
+        BOOST_MPL_ASSERT(( boost::mpl::equal_to
+                             < typename boost::mpl::apply< tdepth
+                                                         , decltype( a1 )
+                                                         >::type
+                             , boost::mpl::int_<0>
+                             >
+                        ));
+        BOOST_MPL_ASSERT(( boost::mpl::equal_to
+                             < typename boost::mpl::apply< tdepth
+                                                         , decltype( a2 )
+                                                         >::type
+                             , boost::mpl::int_<0>
+                             >
+                        ));
         static_assert( numArgs_ == 2
                      , "Calling abstraction (lam) with incorrect number of "
                        "arguments"
