@@ -112,6 +112,18 @@ struct App0
     {
         return sapp( f, boost::fusion::make_vector( a1, a2 ) );
     }
+
+    template< typename F
+            , typename A1
+            , typename A2
+            , typename A3
+            >
+    auto operator()( F f, A1 a1, A2 a2, A3 a3 ) const
+        -> decltype( sapp( f, boost::fusion::make_vector( a1, a2, a3 ) )
+                   )
+    {
+        return sapp( f, boost::fusion::make_vector( a1, a2, a3 ) );
+    }
 } const app = App0();
 
 /** tdepth type function
