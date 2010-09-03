@@ -21,6 +21,7 @@
 #include <boost/type_traits/is_same.hpp> 
 
 #include <boost/fusion/include/mpl.hpp>
+#include <boost/fusion/include/invoke.hpp>
 #include <boost/fusion/include/fused.hpp>
 #include <boost/fusion/include/vector.hpp>
 #include <boost/fusion/include/transform.hpp>
@@ -30,6 +31,7 @@
 #include <boost/fusion/include/at_c.hpp>
 #include <boost/fusion/include/push_front.hpp>
 #include <boost/type_traits/remove_reference.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 /** variables, abstractions, and applications make up our grammar.
  */
@@ -77,10 +79,26 @@ struct App
 //sapp creates an application AST based on a fusion sequence.
 struct SApp
 {
+    typedef SApp this_type;
+
+    template< typename T >
+    struct result;
+
     template< typename F, typename Args >
-    auto operator()( F f, const Args & args ) const
-        -> decltype( App<F,Args>( f, args )
-                   )
+    struct result< this_type( F, Args ) >
+    {
+        typedef App< F
+                   , typename boost::remove_const
+                        < typename boost::remove_reference
+                            < Args
+                            >::type
+                        >::type
+                   > type;
+    };
+
+    template< typename F, typename Args >
+    typename result< this_type( F, const Args & )>::type
+    operator()( F f, const Args & args ) const
     {
         return App<F,Args>( f, args );
     }
@@ -224,12 +242,32 @@ struct tdepth
  */
 struct reduce_App
 {
+    typedef reduce_App this_type;
+
+    template< typename T >
+    struct result;
+
     template< typename App >
-    auto operator()( App a ) const
-        -> decltype( boost::fusion::fused< decltype(a.f) >( a.f )( a.args ) )
+    struct result< this_type( App ) >
+    {
+        typedef typename boost::remove_const
+                   < typename boost::remove_reference
+                       < App
+                       >::type
+                   >::type App2;
+
+        typedef typename boost::fusion::result_of::invoke
+                    < typename App2::F
+                    , const typename App2::Args
+                    >::type type;
+    };
+
+    template< typename App >
+    typename result<this_type( const App &) >::type
+    operator()( const App & a ) const
     {
         //TODO: add static assertion here that tdepth( App ) = 0
-        return boost::fusion::fused< decltype(a.f) >( a.f )( a.args );
+        return boost::fusion::invoke( a.f, a.args );
     }
 };
 
@@ -237,8 +275,25 @@ struct reduce_App
  */
 struct keep_App
 {
+    typedef keep_App this_type;
+
+    template< typename T >
+    struct result;
+
+    template< typename App >
+    struct result< this_type( App ) >
+    {
+        typedef typename boost::remove_const
+                   < typename boost::remove_reference
+                       < App
+                       >::type
+                   >::type App2;
+        typedef App2 type;
+    };
+
     template< typename App>
-    App operator()( App a ) const
+    typename result<this_type( const App & )>::type
+    operator()( const App & a ) const
     {
         return a;
     }
@@ -251,21 +306,117 @@ struct keep_App
  *  The result is the term with the substituted variable and any function
  *  applications done that can now be executed.
  */
+
+/**creduce is a curried version of reduce
+ */
+struct Reduce;
+template< typename Context >
+struct CReduce1
+{
+    CReduce1( const Context & c_ )
+        : c( c_ )
+    {
+    }
+
+    typedef CReduce1<Context> this_type;
+
+    //This result struct is needed for visual c++ 2010 support. :(
+    template< typename T >
+    struct result;
+
+    template< typename Arg >
+    struct result< this_type( Arg ) >
+    {
+        typedef typename boost::remove_const
+                   < typename boost::remove_reference
+                       < Arg
+                       >::type
+                   >::type Arg2;
+        typedef typename boost::result_of
+                            < Reduce( Context , Arg2 )
+                            >::type type;
+    };
+
+    Context c;
+    template< typename Arg >
+    typename result<this_type (const Arg &)>::type
+    operator()( const Arg & a ) const
+    {
+        return reduce( c, a );
+    }
+};
+struct CReduce0
+{
+    typedef CReduce0 this_type;
+
+    template< typename T >
+    struct result;
+
+    template< typename Context >
+    struct result< this_type( Context ) >
+    {
+        typedef CReduce1< typename boost::remove_const
+                                < typename boost::remove_reference
+                                        < Context
+                                        >::type
+                                >::type
+                        > type;
+    };
+
+    template< typename Context >
+    typename result< this_type( const Context &c ) >::type
+    operator()( const Context & c ) const
+    {
+        return CReduce1<Context>( c );
+    }
+} const creduce = CReduce0();
+
 struct Reduce
 {
-    /** Vars **/
+    typedef Reduce this_type;
+    template< typename T>
+    struct result
+    {
+    };
+
+    /** Args **/
+    template< int depth
+            , int argument
+            , typename Context
+            >
+    struct result< this_type( const boost::fusion::pair< boost::mpl::int_<depth>
+                                                       , Context
+                                                       >
+                            , arg< depth, argument >
+                            )
+                 >
+    {
+        typedef typename boost::fusion::result_of::at_c
+                           < Context const
+                           , argument - 1
+                           >::type r;
+        typedef typename boost::remove_const
+                            < typename boost::remove_reference<r>::type
+                            >::type type;
+    };
+
     //TODO: I'm not sure why the arg handler selection works so well, but
     //      I'd like to know.
     template< int depth
             , int argument
             , typename Context
             >
-    auto operator()( boost::fusion::pair< boost::mpl::int_<depth>
-                                        , Context
-                                        > c
-                  , arg< depth, argument >
-                  ) const
-        -> decltype( boost::fusion::at_c< argument - 1 >( c.second ) )
+    typename result< this_type( const boost::fusion::pair< boost::mpl::int_<depth>
+                                                         , Context
+                                                         >
+                              , arg< depth, argument >
+                              )
+                   >::type
+    operator()( const boost::fusion::pair< boost::mpl::int_<depth>
+                                         , Context
+                                         > c
+              , arg< depth, argument >
+              ) const
     {
         return boost::fusion::at_c< argument - 1 >( c.second );
     }
@@ -275,44 +426,109 @@ struct Reduce
             , int argument1
             , typename Context
             >
-    auto operator()( boost::fusion::pair< boost::mpl::int_<depth0>
+    struct result< this_type( const boost::fusion::pair
+                                      < boost::mpl::int_<depth0>
+                                      , Context
+                                      >
+                            , arg< depth1, argument1 >
+                            )
+                 >
+    {
+        typedef arg< depth1, argument1 > type;
+    };
+
+    template< int depth0
+            , int depth1
+            , int argument1
+            , typename Context
+            >
+    typename result< this_type( const boost::fusion::pair
+                                        < boost::mpl::int_<depth0>
                                         , Context
-                                        > c
-                  , arg< depth1, argument1 > v
-                  ) const
-        -> decltype( v ) 
+                                        >
+                              , arg< depth1, argument1 >
+                              )
+                   >::type
+    operator()( const boost::fusion::pair
+                        < boost::mpl::int_<depth0>
+                        , Context
+                        >
+             , arg< depth1, argument1 > v
+             ) const
     {
         return v;
     }
+
     /** Values **/
+
     template< typename ContextPair
             , typename Value
             >
-    auto operator()( ContextPair
-                   , Value v
-                   ) const
-        -> decltype( v ) 
+    struct result< this_type( const ContextPair
+                            , const Value
+                            )
+                 >
+    {
+        //TODO: is this necessary?
+        typedef typename boost::remove_reference<Value>::type Value2;
+        typedef Value2 type;
+    };
+
+    template< typename ContextPair
+            , typename Value
+            >
+    typename result< this_type( const ContextPair
+                              , const Value
+                              )
+                   >::type
+    operator()( const ContextPair
+              , const Value v
+              ) const
     {
         return v;
     }
+
     /** Abstractions **/
     template< int cdepth
             , typename Context
             , int numArgs
             , typename AbsBody
             >
-    auto operator()( boost::fusion::pair< boost::mpl::int_<cdepth>
+    struct result< this_type( const boost::fusion::pair
+                                        < boost::mpl::int_<cdepth>
                                         , Context
-                                        > c
-                  , Abs< numArgs, AbsBody > a
-                  ) const
-        -> decltype( lam<numArgs>( reduce( boost::fusion::make_pair
-                                            < boost::mpl::int_<cdepth+1> >
-                                            ( c.second )
-                                         , a.b
-                                         )
-                                 )
-                   )
+                                        >
+                            , Abs< numArgs, AbsBody >
+                            )
+                 >
+    {  
+        typedef typename boost::result_of< Reduce( boost::fusion::pair
+                                                   < boost::mpl::int_<cdepth+1>
+                                                   , Context
+                                                   >
+                                                 , AbsBody
+                                                 )
+                                         >::type R1;
+        typedef Abs<numArgs, R1> type;
+    };
+    template< int cdepth
+            , typename Context
+            , int numArgs
+            , typename AbsBody
+            >
+    typename result< this_type( const boost::fusion::pair
+                                        < boost::mpl::int_<cdepth>
+                                        , Context
+                                        >
+                              , Abs< numArgs, AbsBody >
+                              )
+                   >::type
+    operator()( const boost::fusion::pair
+                        < boost::mpl::int_<cdepth>
+                        , Context
+                        > c
+             , Abs< numArgs, AbsBody > a
+             ) const
     {
         return lam<numArgs>( reduce( boost::fusion::make_pair
                                       < boost::mpl::int_<cdepth+1> >
@@ -327,37 +543,62 @@ struct Reduce
             , typename F
             , typename Args
             >
-    auto operator()( boost::fusion::pair< boost::mpl::int_<cdepth>
-                                        , Context
-                                        > c
-                  , App< F
-                       , Args
-                       > a
-                  ) const
-        -> decltype
-        ( typename boost::mpl::if_
+    struct result< this_type( const boost::fusion::pair
+                                      < boost::mpl::int_<cdepth>
+                                      , Context
+                                      >
+                            , App< F
+                                 , Args
+                                 >
+                            )
+                 >
+    {
+        typedef boost::fusion::pair< boost::mpl::int_<cdepth>
+                                   , Context
+                                   > C;
+
+        typedef typename boost::result_of<Reduce(C,F)>::type F2;
+
+        typedef typename boost::fusion::result_of::transform
+            < Args const
+            , typename boost::result_of< CReduce0( C ) >::type
+            >::type Args2;
+        typedef typename boost::result_of< SApp( F2, Args2 )>::type A2;
+
+        typedef typename boost::mpl::if_
             < boost::mpl::equal_to
-                            < typename boost::mpl::apply< tdepth
-                                                        , decltype( sapp( reduce( c, a.f )
-                                                                        , boost::fusion::transform
-                                                                                ( a.args
-                                                                                , creduce( c )
-                                                                                )
-                                                                        )
-                                                                  )
-                                                        >::type
-                            , boost::mpl::int_<0>
-                            >
+               < typename boost::mpl::apply< tdepth
+                                           , A2
+                                           >::type
+               , boost::mpl::int_<0>
+               >
             , reduce_App
             , keep_App
-            >::type()( sapp( reduce( c, a.f )
-                           , boost::fusion::transform
-                                   ( a.args
-                                   , creduce( c )
-                                   )
-                           )
-                     )
-        )
+            >::type AppReduction;
+        typedef typename boost::result_of< AppReduction( A2 ) >::type type;
+    };
+
+    template< int cdepth
+            , typename Context
+            , typename F
+            , typename Args
+            >
+    typename result< this_type( const boost::fusion::pair
+                                        < boost::mpl::int_<cdepth>
+                                        , Context
+                                        >
+                              , App< F
+                                   , Args
+                                   >
+                              )
+                   >::type
+    operator()( const boost::fusion::pair< boost::mpl::int_<cdepth>
+                                         , Context
+                                         > c
+              , App< F
+                   , Args
+                   > a
+              ) const
     {
         //Reduce f, all the arguments, and then see if we can execute
         //f at this point.
@@ -381,46 +622,6 @@ struct Reduce
     }
 } const reduce = Reduce();
 
-/**creduce is a curried version of reduce
- */
-template< typename Context >
-struct CReduce1
-{
-    CReduce1( const Context & c_ )
-        : c( c_ )
-    {
-    }
-
-    typedef CReduce1<Context> this_type;
-
-    //This result struct is needed for visual c++ 2010 support. :(
-    template< typename T >
-    struct result;
-    template< typename Arg >
-    struct result< this_type( Arg ) >
-    {
-        typedef typename boost::remove_reference<Arg>::type Arg2;
-        typedef decltype( reduce( *(Context*)(0), *(Arg2*)(0) ) ) type;
-    };
-
-    Context c;
-    template< typename Arg >
-    auto operator()( const Arg & a ) const
-        -> decltype( reduce( c, a ) )
-    {
-        return reduce( c, a );
-    }
-};
-struct CReduce0
-{
-    template< typename Context >
-    auto operator()( const Context & c ) const
-        -> decltype( CReduce1<Context>( c )
-                   )
-    {
-        return CReduce1<Context>( c );
-    }
-} const creduce = CReduce0();
 
 //TODO: Add more overloads for extra arguments (use boost preprocessor)
 template< int numArgs_

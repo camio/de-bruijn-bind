@@ -108,13 +108,13 @@ respectively.
 
 Todo
 ====
-* Backport to C++-98.
 * To make our eager evaluator consistant, the app function should reduce the
   app if it has tdepth = 0.
 * Add more abstraction function call overloads and app overloads (boost 
   preprocessor?).
 * Narrow down the curry/uncurry g++ 4.5 barfs and make a bug report.
 * Rename reduce to the more accurate substitute_reduce.
+* Backport to C++-98.
 
 Futher Out Todo
 ===============

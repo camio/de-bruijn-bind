@@ -76,9 +76,6 @@ int main()
                                  )
                          );
 
-    auto bug = lam<1>( lam<1>( lam<1>( 12 ) ) );
-//    bug( 1 );
-
     std::cout << id( "a" )
               << '\n' << always33( "asdf" )
               << '\n' << const_( "asdf" )( 12 )
@@ -86,8 +83,8 @@ int main()
               << '\n' << flip( minus )( 10, 2 )
               << '\n' << compose( times2, times3 )( 4 )
               << '\n' << negFour()
-              //gcc-4.5 barfs without ICE on these cases.
-//              << '\n' << curry(minus)(3)(2)
+              << '\n' << curry(minus)(3)(2)
+              //gcc-4.5 barfs in weird ways on this case.
 //              << '\n' << uncurry(curriedF)(3,2)
               << '\n';
 }
