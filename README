@@ -32,7 +32,7 @@ Using EBNF here.
 
     application = 'app(', expression, { ',', expression }, ')';
 
-    variable = 'arg<', int non zero, ',', int non zero, '>';
+    variable = 'arg<', int non zero, ',', int non zero, '>()';
 
     value = any c++ value that isn't a variable or a tdepth 0;
 
@@ -69,22 +69,23 @@ which argument of the abstraction it refers to.
 
     flip = λx.λ(y,z).x(z,y) = λ₁λ₂1(1₁, 2₀)
 
-These terms can be directly translated into C++ code using this library.
+These terms can be directly translated into C++ code using this library (note
+that _1_1 is a synonym for arg<1,1>() and so on).
 
-    auto id = lam<1>( arg<1,1>() );
+    auto id = lam<1>( _1_1 );
 
-    auto const_ = lam<1>( lam<1>( arg<2,1>() ) );
+    auto const_ = lam<1>( lam<1>( _2_1 ) );
 
-    auto flip   = lam<1>( lam<2>( app( arg<2,1>()
-                                     , arg<1,2>()
-                                     , arg<1,1>()
+    auto flip   = lam<1>( lam<2>( app( _2_1
+                                     , _1_2
+                                     , _1_1
                                      )
                                 )
                         );
 
-    auto compose = lam<2>( lam<1>( app( arg<2,1>()
-                                      , app( arg<2,2>()
-                                           , arg<1,1>()
+    auto compose = lam<2>( lam<1>( app( _2_1
+                                      , app( _2_2
+                                           , _1_1
                                            )
                                       )
                                  )

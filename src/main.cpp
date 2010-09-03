@@ -33,25 +33,25 @@ boost::function<int (int)> curriedF( int i )
 
 int main()
 {
-    auto id = lam<1>( arg<1,1>() );
+    auto id = lam<1>( _1_1 );
     auto always33 = lam<1>( 33 );
-    auto const_ = lam<1>( lam<1>( arg<2,1>() ) );
+    auto const_ = lam<1>( lam<1>( _2_1 ) );
     auto minusTwelve = lam<1>( app( minus
-                                  , arg<1,1>()
+                                  , _1_1
                                   , 12
                                   )
                              );
 
-    auto flip   = lam<1>( lam<2>( app( arg<2,1>()
-                                     , arg<1,2>()
-                                     , arg<1,1>()
+    auto flip   = lam<1>( lam<2>( app( _2_1
+                                     , _1_2
+                                     , _1_1
                                      )
                                 )
                         );
 
-    auto compose = lam<2>( lam<1>( app( arg<2,1>()
-                                      , app( arg<2,2>()
-                                           , arg<1,1>()
+    auto compose = lam<2>( lam<1>( app( _2_1
+                                      , app( _2_2
+                                           , _1_1
                                            )
                                       )
                                  )
@@ -61,17 +61,17 @@ int main()
                               )
                          );
 
-    auto curry = lam<1>( lam<1>( lam<1>( app( arg<3,1>()
-                                            , arg<2,1>()
-                                            , arg<1,1>()
+    auto curry = lam<1>( lam<1>( lam<1>( app( _3_1
+                                            , _2_1
+                                            , _1_1
                                             )
                                        )
                                )
                        );
-    auto uncurry = lam<1>( lam<2>( app( app( arg<2,1>()
-                                           , arg<1,1>()
+    auto uncurry = lam<1>( lam<2>( app( app( _2_1
+                                           , _1_1
                                            )
-                                      , arg<1,2>()
+                                      , _1_2
                                       )
                                  )
                          );

@@ -491,4 +491,17 @@ struct Abs<0, AbsBody>
 
 };
 
+/** Some shorthands for arg expressions (please know what they translate to!)
+ */
+
+const arg<1,1> _1_1 = arg<1,1>();
+const arg<1,2> _1_2 = arg<1,2>();
+const arg<1,3> _1_3 = arg<1,3>();
+const arg<2,1> _2_1 = arg<2,1>();
+const arg<2,2> _2_2 = arg<2,2>();
+const arg<2,3> _2_3 = arg<2,3>();
+const arg<3,1> _3_1 = arg<3,1>();
+const arg<3,2> _3_2 = arg<3,2>();
+const arg<3,3> _3_3 = arg<3,3>();
+
 #endif
