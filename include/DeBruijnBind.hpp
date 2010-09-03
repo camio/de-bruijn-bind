@@ -113,6 +113,7 @@ struct App0
 {
     typedef App0 this_type;
 
+#ifdef BOOST_NO_VARIADIC_TEMPLATES
     template< typename F
             , typename A1
             >
@@ -144,6 +145,17 @@ struct App0
     {
         return sapp( f, boost::fusion::make_vector( a1, a2, a3 ) );
     }
+#else
+    template< typename F
+            , typename... A
+            >
+    auto operator()( F f, A... a ) const
+        -> decltype( sapp( f, boost::fusion::make_vector( a... ) )
+                   )
+    {
+        return sapp( f, boost::fusion::make_vector( a... ) );
+    }
+#endif    
 } const app = App0();
 
 /** tdepth type function
