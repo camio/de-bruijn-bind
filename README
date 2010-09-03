@@ -17,15 +17,13 @@ This is an alternate bind syntax that is both simpler and/or more powerful than
 other libraries I'm aware off. The use of De Bruijn indicies[1] makes this
 possible.
 
-[1] http://en.wikipedia.org/wiki/De_Bruijn_index The wikipedia page uses
-    uses 1 and up to refer the abstractions where we use 0 and up. So where
-    wikipedia uses λλ2, we would use λλ1.
+[1] http://en.wikipedia.org/wiki/De_Bruijn_index
 
 Grammar
 =======
 Using EBNF here.
 
-    abstraction = 'abs<', int, '>', '(', expression, ')';
+    abstraction = 'lam<', int, '>', '(', expression, ')';
 
     expression = abstraction
                | application
@@ -34,20 +32,24 @@ Using EBNF here.
 
     application = 'app(', expression, { ',', expression }, ')';
 
-    variable = 'var<', int, ',', int, '>';
+    variable = 'arg<', int non zero, ',', int non zero, '>()';
 
     value = any c++ value that isn't a variable or a tdepth 0;
 
     int = digit, {digit};
 
-    digit = "0" | "1" | "2" | "3" ... "9";
+    int non zero = digit non zero, {digit};
+
+    digit = "0" | digit non zero;
+
+    digit non zero = "1" | "2" | "3" ... "9";
 
 The abstraction here requires an int to declare how many arguments the newly
 created function has.
 
 Variables have two ints, the first corresponds to which nested abstraction we're
-referring to. 0 is inner most one and so on outward. The second int corresponds
-to which argument within the abstraction is being referred to, 0 being the
+referring to. 1 is inner most one and so on outward. The second int corresponds
+to which argument within the abstraction is being referred to, 1 being the
 first.
 
 Examples
@@ -55,34 +57,35 @@ Examples
 
 In lambda and then De Bruijn indices.
 
-    id = λx. x = λ0
+    id = λx. x = λ1
 
-    const = λx.λy.x = λλ1
+    const = λx.λy.x = λλ2
 
-    compose = λx.λy.λz.x(y(z)) = λλλ2(1(0))
+    compose = λx.λy.λz.x(y(z)) = λλλ3(2(1))
 
 For flip, I'm introducing subscripts on abstractions (λ) to indicate the
 number of arguments. For the variables (1,2,etc.) I use a subscript to indicate
 which argument of the abstraction it refers to.
 
-    flip = λx.λ(y,z).x(z,y) = λ₁λ₂1(0₁, 1₀)
+    flip = λx.λ(y,z).x(z,y) = λ₁λ₂1(1₁, 2₀)
 
-These terms can be directly translated into C++ code using this library.
+These terms can be directly translated into C++ code using this library (note
+that _1_1 is a synonym for arg<1,1>() and so on).
 
-    auto id = abs<1>( var<0,0>() );
+    auto id = lam<1>( _1_1 );
 
-    auto const_ = abs<1>( abs<1>( var<1,0>() ) );
+    auto const_ = lam<1>( lam<1>( _2_1 ) );
 
-    auto flip   = abs<1>( abs<2>( app( var<1,0>()
-                                     , var<0,1>()
-                                     , var<0,0>()
+    auto flip   = lam<1>( lam<2>( app( _2_1
+                                     , _1_2
+                                     , _1_1
                                      )
                                 )
                         );
 
-    auto compose = abs<2>( abs<1>( app( var<1,0>()
-                                      , app( var<1,1>()
-                                           , var<0,0>()
+    auto compose = lam<2>( lam<1>( app( _2_1
+                                      , app( _2_2
+                                           , _1_1
                                            )
                                       )
                                  )
@@ -105,13 +108,13 @@ respectively.
 
 Todo
 ====
-* Ensure that when an abstraction is used like a function, that it disallows
-  parameters that have a tdepth > 0.
+* Backport to C++-98.
 * To make our eager evaluator consistant, the app function should reduce the
   app if it has tdepth = 0.
 * Add more abstraction function call overloads and app overloads (boost 
   preprocessor?).
-* Backport to C++-98.
+* Narrow down the curry/uncurry g++ 4.5 barfs and make a bug report.
+* Rename reduce to the more accurate substitute_reduce.
 
 Futher Out Todo
 ===============

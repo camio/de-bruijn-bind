@@ -36,7 +36,7 @@
 template< int depth_
         , int argument_
         >
-struct var
+struct arg
 {
     const static int depth = depth_;
     const static int argument = argument_;
@@ -51,7 +51,7 @@ template< int numArgs_
         , typename AbsBody
         >
 Abs< numArgs_, AbsBody >
-abs( AbsBody b )
+lam( AbsBody b )
 {
     return Abs< numArgs_, AbsBody >( b );
 }
@@ -113,6 +113,18 @@ struct App0
     {
         return sapp( f, boost::fusion::make_vector( a1, a2 ) );
     }
+
+    template< typename F
+            , typename A1
+            , typename A2
+            , typename A3
+            >
+    auto operator()( F f, A1 a1, A2 a2, A3 a3 ) const
+        -> decltype( sapp( f, boost::fusion::make_vector( a1, a2, a3 ) )
+                   )
+    {
+        return sapp( f, boost::fusion::make_vector( a1, a2, a3 ) );
+    }
 #else
     template< typename F
             , typename... A
@@ -131,11 +143,11 @@ struct App0
  *  This takes an instance of our grammar and returns the number of 
  *  abstractions it requires to be evaluated.
  *
- *  Assuming αᵢ varies over variables, v varies over values, and e,f over
+ *  Assuming α varies over variables, v varies over values, and e,f over
  *  expressions.
  *
  *  tdepth( v ) = 0
- *  tdepth( α ) = α + 1
+ *  tdepth( α ) = α
  *  tdepth( λ.e ) = max( tdepth( e ) - 1, 0 )
  *  tdepth( f(e) ) = max( tdepth( f ), tdepth( e ) )
  *
@@ -156,11 +168,11 @@ struct tdepth
     template< int depth
             , int argument
             >
-    struct apply< var< depth
-                      , argument
-                      >
-                 >
-                 : boost::mpl::int_< depth + 1 >
+    struct apply< arg< depth
+                     , argument
+                     >
+                >
+                : boost::mpl::int_< depth >
     {
     };
 
@@ -221,7 +233,7 @@ struct reduce_App
     }
 };
 
-/** This function takes an App simply returns it.
+/** This function takes an App and simply returns it.
  */
 struct keep_App
 {
@@ -242,7 +254,7 @@ struct keep_App
 struct Reduce
 {
     /** Vars **/
-    //TODO: I'm not sure why the var handler selection works so well, but
+    //TODO: I'm not sure why the arg handler selection works so well, but
     //      I'd like to know.
     template< int depth
             , int argument
@@ -251,11 +263,11 @@ struct Reduce
     auto operator()( boost::fusion::pair< boost::mpl::int_<depth>
                                         , Context
                                         > c
-                  , var< depth, argument >
+                  , arg< depth, argument >
                   ) const
-        -> decltype( boost::fusion::at_c<argument>( c.second ) )
+        -> decltype( boost::fusion::at_c< argument - 1 >( c.second ) )
     {
-        return boost::fusion::at_c<argument>( c.second );
+        return boost::fusion::at_c< argument - 1 >( c.second );
     }
 
     template< int depth0
@@ -266,7 +278,7 @@ struct Reduce
     auto operator()( boost::fusion::pair< boost::mpl::int_<depth0>
                                         , Context
                                         > c
-                  , var< depth1, argument1 > v
+                  , arg< depth1, argument1 > v
                   ) const
         -> decltype( v ) 
     {
@@ -294,7 +306,7 @@ struct Reduce
                                         > c
                   , Abs< numArgs, AbsBody > a
                   ) const
-        -> decltype( abs<numArgs>( reduce( boost::fusion::make_pair
+        -> decltype( lam<numArgs>( reduce( boost::fusion::make_pair
                                             < boost::mpl::int_<cdepth+1> >
                                             ( c.second )
                                          , a.b
@@ -302,7 +314,7 @@ struct Reduce
                                  )
                    )
     {
-        return abs<numArgs>( reduce( boost::fusion::make_pair
+        return lam<numArgs>( reduce( boost::fusion::make_pair
                                       < boost::mpl::int_<cdepth+1> >
                                       ( c.second )
                                    , a.b
@@ -426,17 +438,24 @@ struct Abs
     template< typename A1 >
     auto operator()( A1 a1 ) const
         -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<0> >
+                              < boost::mpl::int_<1> >
                               ( boost::fusion::make_vector( a1 ) )
                            , b
                            )
                    )
     {
+        BOOST_MPL_ASSERT(( boost::mpl::equal_to
+                             < typename boost::mpl::apply< tdepth
+                                                         , decltype( a1 )
+                                                         >::type
+                             , boost::mpl::int_<0>
+                             >
+                        ));
         static_assert( numArgs_ == 1
-                     , "Calling abstraction with too many arguments"
+                     , "Calling abstraction (lam) with too many arguments"
                      );
         return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<0> >
+                        < boost::mpl::int_<1> >
                         ( boost::fusion::make_vector( a1 ) )
                      , b
                      );
@@ -448,7 +467,7 @@ struct Abs
                    , A2 a2
                    ) const
         -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<0> >
+                              < boost::mpl::int_<1> >
                               ( boost::fusion::make_vector( a1
                                                           , a2
                                                           )
@@ -457,11 +476,27 @@ struct Abs
                            )
                    )
     {
+        //TODO: repeated code here, clean it up.
+        BOOST_MPL_ASSERT(( boost::mpl::equal_to
+                             < typename boost::mpl::apply< tdepth
+                                                         , decltype( a1 )
+                                                         >::type
+                             , boost::mpl::int_<0>
+                             >
+                        ));
+        BOOST_MPL_ASSERT(( boost::mpl::equal_to
+                             < typename boost::mpl::apply< tdepth
+                                                         , decltype( a2 )
+                                                         >::type
+                             , boost::mpl::int_<0>
+                             >
+                        ));
         static_assert( numArgs_ == 2
-                     , "Calling abstraction with incorrect number of arguments"
+                     , "Calling abstraction (lam) with incorrect number of "
+                       "arguments"
                      );
         return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<0> >
+                        < boost::mpl::int_<1> >
                         ( boost::fusion::make_vector( a1
                                                     , a2
                                                     )
@@ -486,7 +521,7 @@ struct Abs<0, AbsBody>
 
     auto operator()() const
         -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<0> >
+                              < boost::mpl::int_<1> >
                               ( boost::fusion::make_vector() )
 //                           , b
                            , *(AbsBody*)(0) //a workaround for msvc
@@ -494,12 +529,25 @@ struct Abs<0, AbsBody>
                    )
     {
         return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<0> >
+                        < boost::mpl::int_<1> >
                         ( boost::fusion::make_vector() )
                      , b
                      );
     }
 
 };
+
+/** Some shorthands for arg expressions (please know what they translate to!)
+ */
+
+const arg<1,1> _1_1 = arg<1,1>();
+const arg<1,2> _1_2 = arg<1,2>();
+const arg<1,3> _1_3 = arg<1,3>();
+const arg<2,1> _2_1 = arg<2,1>();
+const arg<2,2> _2_2 = arg<2,2>();
+const arg<2,3> _2_3 = arg<2,3>();
+const arg<3,1> _3_1 = arg<3,1>();
+const arg<3,2> _3_2 = arg<3,2>();
+const arg<3,3> _3_3 = arg<3,3>();
 
 #endif

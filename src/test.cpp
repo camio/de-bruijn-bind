@@ -3,8 +3,8 @@
 static void testTDepth()
 {
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< var<3,0> >::type
-                        , boost::mpl::int_<4>
+                        < tdepth::apply< arg<3,1> >::type
+                        , boost::mpl::int_<3>
                         >
                      ));
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
@@ -13,7 +13,7 @@ static void testTDepth()
                         >
                      ));
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
-                        < tdepth::apply< Abs<1, var<0,0> >
+                        < tdepth::apply< Abs<1, arg<1,1> >
                                        >::type
                         , boost::mpl::int_<0>
                         >
@@ -21,7 +21,7 @@ static void testTDepth()
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
                         < tdepth::apply< Abs< 1
                                             , Abs< 1
-                                                 , var<0,0>
+                                                 , arg<1,1>
                                                  >
                                             >
                                        >::type
@@ -31,7 +31,7 @@ static void testTDepth()
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
                         < tdepth::apply< Abs< 1
                                             , Abs< 1
-                                                 , var<2,0>
+                                                 , arg<3,1>
                                                  >
                                             >
                                        >::type
@@ -41,8 +41,8 @@ static void testTDepth()
     BOOST_MPL_ASSERT(( boost::mpl::equal_to
                         < tdepth::apply< App< boost::mpl::void_
                                             , boost::fusion::vector
-                                               < var<2,0>
-                                               , var<4,0>
+                                               < arg<3,1>
+                                               , arg<5,1>
                                                >
                                             >
                                        >::type
@@ -53,8 +53,8 @@ static void testTDepth()
                         < tdepth::apply< Abs< 1
                                             , App< boost::mpl::void_
                                                  , boost::fusion::vector
-                                                    < var<2,0>
-                                                    , var<3,0>
+                                                    < arg<3,1>
+                                                    , arg<4,1>
                                                     >
                                                  >
                                             >

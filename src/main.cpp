@@ -6,6 +6,14 @@ int minus( int a, int b )
     return a - b;
 }
 
+struct MinusF
+{
+    int operator()( int a, int b ) const
+    {
+        return a - b;
+    }
+} const minusF = MinusF();
+
 int times2( int a )
 {
     return a*2;
@@ -16,35 +24,60 @@ int times3( int a )
     return a*3;
 }
 
+#include <boost/function.hpp>
+boost::function<int (int)> curriedF( int i )
+{
+    return times2;
+}
+
+
 int main()
 {
-    auto id = abs<1>( var<0,0>() );
-    auto always33 = abs<1>( 33 );
-    auto const_ = abs<1>( abs<1>( var<1,0>() ) );
-    auto minusTwelve = abs<1>( app( minus
-                                  , var<0,0>()
+    auto id = lam<1>( _1_1 );
+    auto always33 = lam<1>( 33 );
+    auto const_ = lam<1>( lam<1>( _2_1 ) );
+    auto minusTwelve = lam<1>( app( minus
+                                  , _1_1
                                   , 12
                                   )
                              );
 
-    auto flip   = abs<1>( abs<2>( app( var<1,0>()
-                                     , var<0,1>()
-                                     , var<0,0>()
+    auto flip   = lam<1>( lam<2>( app( _2_1
+                                     , _1_2
+                                     , _1_1
                                      )
                                 )
                         );
 
-    auto compose = abs<2>( abs<1>( app( var<1,0>()
-                                      , app( var<1,1>()
-                                           , var<0,0>()
+    auto compose = lam<2>( lam<1>( app( _2_1
+                                      , app( _2_2
+                                           , _1_1
                                            )
                                       )
                                  )
                          );
-    auto negFour = abs<0>( app( times2
+    auto negFour = lam<0>( app( times2
                               , app( minus, 2, 4 )
                               )
                          );
+
+    auto curry = lam<1>( lam<1>( lam<1>( app( _3_1
+                                            , _2_1
+                                            , _1_1
+                                            )
+                                       )
+                               )
+                       );
+    auto uncurry = lam<1>( lam<2>( app( app( _2_1
+                                           , _1_1
+                                           )
+                                      , _1_2
+                                      )
+                                 )
+                         );
+
+    auto bug = lam<1>( lam<1>( lam<1>( 12 ) ) );
+//    bug( 1 );
 
     std::cout << id( "a" )
               << '\n' << always33( "asdf" )
@@ -53,5 +86,8 @@ int main()
               << '\n' << flip( minus )( 10, 2 )
               << '\n' << compose( times2, times3 )( 4 )
               << '\n' << negFour()
+              //gcc-4.5 barfs without ICE on these cases.
+//              << '\n' << curry(minus)(3)(2)
+//              << '\n' << uncurry(curriedF)(3,2)
               << '\n';
 }
