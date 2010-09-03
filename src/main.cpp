@@ -76,6 +76,9 @@ int main()
                                  )
                          );
 
+    auto bug = abs<1>( abs<1>( abs<1>( 12 ) ) );
+//    bug( 1 );
+
     std::cout << id( "a" )
               << '\n' << always33( "asdf" )
               << '\n' << const_( "asdf" )( 12 )

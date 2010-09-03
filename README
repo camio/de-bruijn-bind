@@ -107,7 +107,6 @@ respectively.
 
 Todo
 ====
-* Add a curry/uncurry example.
 * Rename abs to lam and var to arg.
 * Ensure that when an abstraction is used like a function, that it disallows
   parameters that have a tdepth > 0.
@@ -116,6 +115,8 @@ Todo
 * Add more abstraction function call overloads and app overloads (boost 
   preprocessor?).
 * Backport to C++-98.
+* Narrow down the curry/uncurry g++ 4.5 barfs and make a bug report.
+* Rename reduce to the more accurate substitute_reduce.
 
 Futher Out Todo
 ===============
