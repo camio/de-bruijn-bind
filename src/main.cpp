@@ -24,12 +24,19 @@ int times3( int a )
     return a*3;
 }
 
-#include <boost/function.hpp>
-boost::function<int (int)> curriedF( int i )
+struct Foo
 {
-    return times2;
-}
+    typedef int result_type;
+    int operator()( int a ) const
+    {
+        return a*2;
+    }
+} const foo = Foo();
 
+Foo curriedF( int i )
+{
+    return foo;
+}
 
 int main()
 {
@@ -84,7 +91,6 @@ int main()
               << '\n' << compose( times2, times3 )( 4 )
               << '\n' << negFour()
               << '\n' << curry(minus)(3)(2)
-              //gcc-4.5 barfs in weird ways on this case.
-//              << '\n' << uncurry(curriedF)(3,2)
+              << '\n' << uncurry(curriedF)(3,2)
               << '\n';
 }
