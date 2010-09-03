@@ -100,7 +100,22 @@ int main()
                                )
                           );
 
-    auto tst = fix( lam<1>( lam<1>( app( app( iff
+//    auto tst = fix( lam<1>( lam<1>( app( app( iff
+//                                            , app( equals
+//                                                 , _1_1
+//                                                 , 0
+//                                                 )
+//                                            , const_( 1 )
+//                                            , _2_1
+//                                            )
+//                                       , app( minusOne
+//                                            , _1_1
+//                                            )
+//                                       )
+//                                   )
+//                          )
+//                  );
+    auto tst =      lam<1>( lam<1>( app( app( iff
                                             , app( equals
                                                  , _1_1
                                                  , 0
@@ -114,7 +129,8 @@ int main()
                                        )
                                    )
                           )
-                  );
+                   ;
+    tst( 0 );
     auto bug = lam<1>( lam<1>( lam<1>( 12 ) ) );
 //    bug( 1 );
 
