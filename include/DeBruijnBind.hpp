@@ -583,7 +583,10 @@ struct Reduce
             < Args const
             , typename boost::result_of< CReduce0( C ) >::type
             >::type Args2;
-        typedef typename boost::result_of< SApp( F2, Args2 )>::type A2;
+
+        typedef typename boost::fusion::result_of::as_vector< Args2
+                                                            >::type Args3;
+        typedef typename boost::result_of< SApp( F2, Args3 )>::type A2;
 
         typedef typename boost::mpl::if_
             < boost::mpl::equal_to
@@ -623,10 +626,12 @@ struct Reduce
         //Reduce f, all the arguments, and then see if we can execute
         //f at this point.
         auto a2 = sapp( reduce( c, a.f )
-                      , boost::fusion::transform
+                      , boost::fusion::as_vector
+                          ( boost::fusion::transform
                             ( a.args
                             , creduce( c )
                             )
+                          )
                       );
         typedef typename boost::mpl::if_
             < boost::mpl::equal_to
