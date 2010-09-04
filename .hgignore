@@ -2,3 +2,5 @@ syntax: glob
 *.exe
 *.obj
 vim.vim
+bin/main-vc.*
+vc100.pdb
