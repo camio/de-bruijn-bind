@@ -61,10 +61,39 @@ lam( AbsBody b )
 template< typename FixBody_ >
 struct Fix
 {
+    typedef Fix<FixBody_> this_type;
     typedef FixBody_ FixBody;
+    typedef typename FixBody_::AbsBody FixBodyBody;
     Fix( FixBody b_ )
         : b( b_ )
     {
+    }
+
+    template< typename T >
+    struct result
+    {
+    };
+    template< typename A1 >
+    struct result<this_type( A1 )>
+    {
+        typedef typename boost::result_of< FixBody( this_type ) >::type Z;
+        typedef typename boost::result_of<Z ( typename boost::remove_const
+                                              < typename boost::remove_reference
+                                                  < A1
+                                                  >::type
+                                              >::type
+                                            )
+                                         >::type Z2;
+        typedef Z2 type;
+    };
+    template< typename A1 >
+    typename result<this_type(A1)>::type
+    operator()( A1 a1 ) const
+    {
+        static_assert( FixBody::numArgs == 1
+                     , "Calling abstraction (lam) with too many arguments"
+                     );
+        return b( *this )( a1 );
     }
     FixBody b;
 };
