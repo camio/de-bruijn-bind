@@ -1,0 +1,4 @@
+- Incorporate fix into the main reduction code.
+- Make Fix functions take multiple arguments.
+- Get a lazy lambda working to simplify the factorial code.
+- Think about a 0 argument fix (Does this have value? I think yes.)
