@@ -650,25 +650,44 @@ struct Reduce
 
 //TODO: Add more overloads for extra arguments (use boost preprocessor)
 template< int numArgs_
-        , typename AbsBody
+        , typename AbsBody_
         >
 struct Abs
 {
+    typedef AbsBody_ AbsBody;
     typedef Abs<numArgs_,AbsBody> this_type;
+    static const int numArgs = numArgs_;
     Abs( AbsBody b_ ) : b( b_ )
     {
     }
     AbsBody b;
 
     //Abstraction terms can accept arguments and we do so below.
+    template< typename T >
+    struct result;
+
     template< typename A1 >
-    auto operator()( A1 a1 ) const
-        -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<1> >
-                              ( boost::fusion::make_vector( a1 ) )
-                           , b
-                           )
-                   )
+    struct result< this_type( A1 ) >
+    {
+        typedef typename boost::fusion::result_of::make_vector
+                    < typename boost::remove_const
+                        < typename boost::remove_reference
+                            < A1
+                            >::type
+                        >::type
+                    >::type V;
+        typedef typename boost::fusion::result_of::make_pair
+                    < boost::mpl::int_<1>
+                    , V
+                    >::type P;
+        typedef typename boost::result_of
+                    < Reduce( P, AbsBody )
+                    >::type type;
+    };
+
+    template< typename A1 >
+    typename result< this_type( A1 )>::type
+    operator()( A1 a1 ) const
     {
         BOOST_MPL_ASSERT(( boost::mpl::equal_to
                              < typename boost::mpl::apply< tdepth
@@ -735,11 +754,13 @@ struct Abs
  * operator() is not a template function and therefore will
  * always be instanciated.
  */
-template< typename AbsBody
+template< typename AbsBody_
         >
-struct Abs<0, AbsBody>
+struct Abs<0, AbsBody_>
 {
+    typedef AbsBody_ AbsBody;
     typedef Abs<0,AbsBody> this_type;
+    static const int numArgs = 0;
     Abs( AbsBody b_ ) : b( b_ )
     {
     }
