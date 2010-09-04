@@ -6,6 +6,11 @@ int minus( int a, int b )
     return a - b;
 }
 
+int mult( int a, int b )
+{
+    return a*b;
+}
+
 struct MinusF
 {
     int operator()( int a, int b ) const
@@ -24,6 +29,11 @@ int times3( int a )
     return a*3;
 }
 
+int always3( int )
+{
+    return 3;
+}
+
 struct Foo
 {
     typedef int result_type;
@@ -38,10 +48,26 @@ Foo curriedF( int i )
     return foo;
 }
 
+#include <boost/function.hpp>
+
+//TODO: Iff really needs to compute the nearest supertype of a1 and a2 and make that
+//      the result. Perhaps another template function that computes the supertype?
+//      Maybe the nearest supertype should be specified with a template parameter?
 struct Iff
 {
-    template< typename A >
-    A operator()( bool c, A a1, A a2 ) const
+//    template< typename A, Typename B >
+//    typename nearest_supertype<A,B>::type
+//    operator()( bool c, A a1, B a2 ) const
+//    {
+//        return c ? a1 : a2;
+//    }
+    typedef boost::function<int(int)> result_type;
+
+    boost::function<int(int)> operator()
+        ( bool c
+        , boost::function<int(int)> a1
+        , boost::function<int(int)> a2
+        ) const
     {
         return c ? a1 : a2;
     }
@@ -49,6 +75,7 @@ struct Iff
 
 struct Equals
 {
+    typedef bool result_type;
     template< typename A >
     bool operator()( const A a1, const A a2 ) const
     {
@@ -56,6 +83,10 @@ struct Equals
     }
 } const equals = Equals();
 
+int minusOneF( int i )
+{
+    return i-1;
+}
 
 int main()
 {
@@ -108,28 +139,38 @@ int main()
                                )
                           );
 
-    //fix λ₁λ₁(iff( equals(1₁,0)
-    //            , const(1)
-    //            , 2₁
-    //            )
+    //λ₁λ₁(iff( equals(1₁,0)
+    //        , const(1)
+    //        , λ₁ mult(2₁, 3₁(minus(2₁, 1₁)))
     //        )
-    //        (minus1, 1₁)
-    auto tst = fix( lam<1>( lam<1>( app( app( iff
-                                            , app( equals
+    //    )1
+    auto factInner = lam<1>( lam<1>( app( app( iff
+                                             , app( equals
                                                  , _1_1
-                                                 , 0
+                                                 , 1
                                                  )
-                                            , const_( 1 )
-                                            , _2_1
-                                            )
-                                       , app( minusOne
-                                            , _1_1
-                                            )
-                                       )
+                                             , const_( 1 )
+                                             , lam<1>( app( mult
+                                                          , _2_1
+                                                          , app( _3_1
+                                                               , app( minus
+                                                                    , _2_1
+//                                                                  using the argument here
+//                                                                  instead of 1 ensures this
+//                                                                  function won't be applied until
+//                                                                  after iff has returned.
+//                                                                    , 1
+                                                                    , _1_1
+                                                                    )
+                                                               )
+                                                          )
+                                                     )
+                                             )
+                                        , 1 //could be void
+                                        )
                                    )
-                          )
-                  );
-    tst( 0 );// ⇒ 
+                           );
+    auto fact = fix( factInner );
     std::cout << id( "a" )
               << '\n' << always33( "asdf" )
               << '\n' << const_( "asdf" )( 12 )
@@ -139,5 +180,10 @@ int main()
               << '\n' << negFour()
               << '\n' << curry(minus)(3)(2)
               << '\n' << uncurry(curriedF)(3,2)
+              << '\n' << tst( 0 ) // ⇐ 0
+              << '\n' << fact( 1 ) // ⇒ 1
+              << '\n' << fact( 2 ) // ⇒ 2
+              << '\n' << fact( 4 ) // ⇒ 12
+              << '\n' << fact( 10 ) // ⇒ 3628800
               << '\n';
 }
