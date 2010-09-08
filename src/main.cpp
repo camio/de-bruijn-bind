@@ -38,6 +38,21 @@ Foo curriedF( int i )
     return foo;
 }
 
+namespace larryEvans
+{
+    int next( int i )
+    {
+        return i+1;
+    }
+    int foo()
+    {
+       auto op = lam<1>( app(next,_1_1 ) );
+       int op_1 = op(1);
+       auto lam_app = lam<1>( app(op,_1_1) );
+       int lam_app_1 = lam_app(1);
+       return op_1 + lam_app_1;
+    }
+}
 int main()
 {
     auto id = lam<1>( _1_1 );
@@ -82,6 +97,7 @@ int main()
                                       )
                                  )
                          );
+    
 
     std::cout << id( "a" )
               << '\n' << always33( "asdf" )
@@ -92,5 +108,6 @@ int main()
               << '\n' << negFour()
               << '\n' << curry(minus)(3)(2)
               << '\n' << uncurry(curriedF)(3,2)
+              << '\n' << "foo:" << larryEvans::foo( )
               << '\n';
 }
