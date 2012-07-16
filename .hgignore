@@ -4,3 +4,5 @@ syntax: glob
 vim.vim
 bin/main-vc.*
 vc100.pdb
+bin
+local-config.mk
