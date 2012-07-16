@@ -342,7 +342,7 @@ struct CReduce1
     typename result<this_type (const Arg &)>::type
     operator()( const Arg & a ) const
     {
-        return reduce( c, a );
+        return Reduce()( c, a );
     }
 };
 struct CReduce0
@@ -530,11 +530,11 @@ struct Reduce
              , Abs< numArgs, AbsBody > a
              ) const
     {
-        return lam<numArgs>( reduce( boost::fusion::make_pair
-                                      < boost::mpl::int_<cdepth+1> >
-                                      ( c.second )
-                                   , a.b
-                                   )
+        return lam<numArgs>( Reduce()( boost::fusion::make_pair
+                                        < boost::mpl::int_<cdepth+1> >
+                                        ( c.second )
+                                     , a.b
+                                     )
                            );
     }
     /** Applications **/
@@ -605,7 +605,7 @@ struct Reduce
     {
         //Reduce f, all the arguments, and then see if we can execute
         //f at this point.
-        auto a2 = sapp( reduce( c, a.f )
+        auto a2 = sapp( Reduce()( c, a.f )
                       , boost::fusion::as_vector
                           ( boost::fusion::transform
                             ( a.args
@@ -679,11 +679,11 @@ struct Abs
         static_assert( numArgs_ == 1
                      , "Calling abstraction (lam) with too many arguments"
                      );
-        return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<1> >
-                        ( boost::fusion::make_vector( a1 ) )
-                     , b
-                     );
+        return Reduce()( boost::fusion::make_pair
+                          < boost::mpl::int_<1> >
+                          ( boost::fusion::make_vector( a1 ) )
+                       , b
+                       );
     }
     template< typename A1
             , typename A2
@@ -691,14 +691,14 @@ struct Abs
     auto operator()( A1 a1
                    , A2 a2
                    ) const
-        -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<1> >
-                              ( boost::fusion::make_vector( a1
-                                                          , a2
-                                                          )
-                              )
-                           , b
-                           )
+        -> decltype( Reduce()( boost::fusion::make_pair
+                                < boost::mpl::int_<1> >
+                                ( boost::fusion::make_vector( a1
+                                                            , a2
+                                                            )
+                                )
+                             , b
+                             )
                    )
     {
         //TODO: repeated code here, clean it up.
@@ -720,14 +720,14 @@ struct Abs
                      , "Calling abstraction (lam) with incorrect number of "
                        "arguments"
                      );
-        return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<1> >
-                        ( boost::fusion::make_vector( a1
-                                                    , a2
-                                                    )
-                        )
-                     , b
-                     );
+        return Reduce()( boost::fusion::make_pair
+                          < boost::mpl::int_<1> >
+                          ( boost::fusion::make_vector( a1
+                                                      , a2
+                                                      )
+                          )
+                       , b
+                       );
     }
 };
 /* Abs<0,AbsBody> needs to be specialized because its
@@ -747,19 +747,18 @@ struct Abs<0, AbsBody_>
     AbsBody b;
 
     auto operator()() const
-        -> decltype( reduce( boost::fusion::make_pair
-                              < boost::mpl::int_<1> >
-                              ( boost::fusion::make_vector() )
-//                           , b
-                           , *(AbsBody*)(0) //a workaround for msvc
-                           )
+        -> decltype( Reduce()( boost::fusion::make_pair
+                                < boost::mpl::int_<1> >
+                                ( boost::fusion::make_vector() )
+                             , *(AbsBody*)(0) //a workaround for msvc
+                             )
                    )
     {
-        return reduce( boost::fusion::make_pair
-                        < boost::mpl::int_<1> >
-                        ( boost::fusion::make_vector() )
-                     , b
-                     );
+        return Reduce()( boost::fusion::make_pair
+                          < boost::mpl::int_<1> >
+                          ( boost::fusion::make_vector() )
+                       , b
+                       );
     }
 
 };
