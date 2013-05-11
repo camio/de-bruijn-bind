@@ -1,5 +1,7 @@
 #include <dbb/dbb.hpp>
 
+using namespace dbb;
+
 static void testTDepth()
 {
   BOOST_MPL_ASSERT(( boost::mpl::equal_to
