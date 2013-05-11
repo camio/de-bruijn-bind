@@ -6,18 +6,46 @@ int minus( int a, int b )
     return a - b;
 }
 
-int mult( int a, int b )
-{
-    return a*b;
-}
+#define BOOST_TEST_MODULE odillo test suite
+#define BOOST_TEST_ALTERNATIVE_INIT_API
+#define BOOST_TEST_MAIN
+//#define BOOST_TEST_NO_MAIN
+#include <boost/test/included/unit_test.hpp>
 
-struct MinusF
+BOOST_AUTO_TEST_CASE( test_dbb )
 {
-    int operator()( int a, int b ) const
-    {
-        return a - b;
-    }
-} const minusF = MinusF();
+    auto id = lam<1>( _1_1 );
+    BOOST_CHECK_EQUAL( id( 'a' ), 'a' );
+
+    auto always33 = lam<1>( 33 );
+    BOOST_CHECK_EQUAL( always33( "asdf" ), 33 );
+
+    auto const_ = lam<1>( lam<1>( _2_1 ) );
+    BOOST_CHECK_EQUAL( const_( "asdf" )( 12 ), "asdf" );
+
+    auto minusTwelve = lam<1>( app( minus
+                                  , _1_1
+                                  , 12
+                                  )
+                             );
+    BOOST_CHECK_EQUAL( minusTwelve( 24 ), 12 );
+
+    auto flip   = lam<1>( lam<2>( app( _2_1
+                                     , _1_2
+                                     , _1_1
+                                     )
+                                )
+                        );
+    BOOST_CHECK_EQUAL( flip( minus )( 10, 2 ), -8 );
+
+    auto negFour = lam<0>( app( times2
+                              , app( minus, 2, 4 )
+                              )
+                         );
+
+    BOOST_CHECK_EQUAL( negFour( ), -4 );
+
+}
 
 int times2( int a )
 {
@@ -28,10 +56,16 @@ int times3( int a )
 {
     return a*3;
 }
-
-int always3( int )
+BOOST_AUTO_TEST_CASE( test_dbb_compose )
 {
-    return 3;
+    auto compose = lam<2>( lam<1>( app( _2_1
+                                      , app( _2_2
+                                           , _1_1
+                                           )
+                                      )
+                                 )
+                         );
+    BOOST_CHECK_EQUAL( compose( times2, times3 )( 4 ), 24 );
 }
 
 struct Foo
@@ -46,6 +80,28 @@ struct Foo
 Foo curriedF( int i )
 {
     return foo;
+}
+
+BOOST_AUTO_TEST_CASE( test_dbb_currying )
+{
+    auto curry = lam<1>( lam<1>( lam<1>( app( _3_1
+                                            , _2_1
+                                            , _1_1
+                                            )
+                                       )
+                               )
+                       );
+
+    BOOST_CHECK_EQUAL( curry( minus )( 3 )( 2 ), 1 );
+
+    auto uncurry = lam<1>( lam<2>( app( app( _2_1
+                                           , _1_1
+                                           )
+                                      , _1_2
+                                      )
+                                 )
+                         );
+    BOOST_CHECK_EQUAL( uncurry( curriedF )( 3, 2 ), 4 );
 }
 
 namespace larryEvans
@@ -63,6 +119,11 @@ namespace larryEvans
        return op_1 + lam_app_1;
     }
 }
+BOOST_AUTO_TEST_CASE( test_dbb_Larry_Evans )
+{
+    BOOST_CHECK_EQUAL( larryEvans::foo(), 4 );
+}
+
 #include <boost/function.hpp>
 
 //TODO: Iff really needs to compute the nearest supertype of a1 and a2 and make that
@@ -87,7 +148,6 @@ struct Iff
         return c ? a1 : a2;
     }
 } const iff = Iff();
-
 struct Equals
 {
     typedef bool result_type;
@@ -98,63 +158,15 @@ struct Equals
     }
 } const equals = Equals();
 
-int minusOneF( int i )
+int mult( int a, int b )
 {
-    return i-1;
+    return a*b;
 }
 
-int main()
+BOOST_AUTO_TEST_CASE( test_dbb_factorial )
 {
-    auto id = lam<1>( _1_1 );
-    auto always33 = lam<1>( 33 );
+    //TODO: move this to a shared Place
     auto const_ = lam<1>( lam<1>( _2_1 ) );
-    auto minusTwelve = lam<1>( app( minus
-                                  , _1_1
-                                  , 12
-                                  )
-                             );
-
-    auto flip   = lam<1>( lam<2>( app( _2_1
-                                     , _1_2
-                                     , _1_1
-                                     )
-                                )
-                        );
-
-    auto compose = lam<2>( lam<1>( app( _2_1
-                                      , app( _2_2
-                                           , _1_1
-                                           )
-                                      )
-                                 )
-                         );
-    auto negFour = lam<0>( app( times2
-                              , app( minus, 2, 4 )
-                              )
-                         );
-
-    auto curry = lam<1>( lam<1>( lam<1>( app( _3_1
-                                            , _2_1
-                                            , _1_1
-                                            )
-                                       )
-                               )
-                       );
-    auto uncurry = lam<1>( lam<2>( app( app( _2_1
-                                           , _1_1
-                                           )
-                                      , _1_2
-                                      )
-                                 )
-                         );
-    
-    auto minusOne = lam<1>( app( minus
-
-                               , _1_1
-                               , 1
-                               )
-                          );
-
     //λ₁λ₁(iff( equals(1₁,0)
     //        , const(1)
     //        , λ₁ mult(2₁, 3₁(minus(2₁, 1₁)))
@@ -187,26 +199,8 @@ int main()
                                    )
                            );
     auto fact = fix( factInner );
-    std::cout << id( "a" )
-              << '\n' << always33( "asdf" )
-              << '\n' << const_( "asdf" )( 12 )
-              << '\n' << minusTwelve( 24 )
-              << '\n' << flip( minus )( 10, 2 )
-              << '\n' << compose( times2, times3 )( 4 )
-              << '\n' << negFour()
-              << '\n' << curry(minus)(3)(2)
-              << '\n' << uncurry(curriedF)(3,2)
-              << '\n' << "foo:" << larryEvans::foo( )
-              << '\n' << fact( 1 ) // ⇒ 1
-              << '\n' << fact( 2 ) // ⇒ 2
-              << '\n' << fact( 4 ) // ⇒ 12
-              << '\n' << fact( 10 ) // ⇒ 3628800
-              << '\n';
+    BOOST_CHECK_EQUAL( fact( 1 ), 1 );
+    BOOST_CHECK_EQUAL( fact( 2 ), 2 );
+    BOOST_CHECK_EQUAL( fact( 4 ), 24 );
+    BOOST_CHECK_EQUAL( fact( 10 ), 3628800 );
 }
-
-
-#define BOOST_TEST_MODULE odillo test suite
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#define BOOST_TEST_MAIN
-#define BOOST_TEST_NO_MAIN
-#include <boost/test/included/unit_test.hpp>
