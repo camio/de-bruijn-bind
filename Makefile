@@ -7,7 +7,7 @@ r: bin/main.exe
 all: bin/main.exe
 
 bin/main.exe: src/main.cpp src/test.cpp include/DeBruijnBind.hpp | $$(@D)/.f
-	$(GPLUSPLUS) -g -Iinclude -I$(BOOST_PATH) -std=gnu++0x src/main.cpp src/test.cpp -o bin/main.exe -lstdc++
+	$(GPLUSPLUS) -g -Iinclude -I$(BOOST_PATH) -std=c++11 src/main.cpp src/test.cpp -o bin/main.exe -lstdc++
 
 bin/main-vc.exe: src/main.cpp src/test.cpp include/DeBruijnBind.hpp | $$(@D)/.f
 	cl -EHsc -Iinclude -I$(BOOST_PATH) src/main.cpp src/test.cpp -Febin/main-vc.exe -Zi -MTd -link -DEBUG

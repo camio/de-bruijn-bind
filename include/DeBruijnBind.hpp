@@ -58,6 +58,55 @@ lam( AbsBody b )
     return Abs< numArgs_, AbsBody >( b );
 }
 
+template< typename FixBody_ >
+struct Fix
+{
+    typedef Fix<FixBody_> this_type;
+    typedef FixBody_ FixBody;
+    typedef typename FixBody_::AbsBody FixBodyBody;
+    Fix( FixBody b_ )
+        : b( b_ )
+    {
+    }
+
+    template< typename T >
+    struct result
+    {
+    };
+    template< typename A1 >
+    struct result<this_type( A1 )>
+    {
+        typedef typename boost::result_of< FixBody( this_type ) >::type Z;
+        typedef typename boost::result_of<Z ( typename boost::remove_const
+                                              < typename boost::remove_reference
+                                                  < A1
+                                                  >::type
+                                              >::type
+                                            )
+                                         >::type Z2;
+        typedef Z2 type;
+    };
+    template< typename A1 >
+    typename result<this_type(A1)>::type
+    operator()( A1 a1 ) const
+    {
+        static_assert( FixBody::numArgs == 1
+                     , "Calling abstraction (lam) with too many arguments"
+                     );
+        return b( *this )( a1 );
+    }
+    FixBody b;
+};
+
+struct Fix0
+{
+    template< typename AbsBody >
+    Fix< Abs<1, AbsBody> > operator()( Abs< 1, AbsBody> b ) const
+    {
+        return Fix< Abs<1, AbsBody> >( b );
+    }
+} const fix = Fix0();
+
 //For application, we're encoding the arguments as a fusion
 //sequence.
 template< typename F_
@@ -106,44 +155,10 @@ struct SApp
 
 /** app creates an application AST based on multiple arguments.
  */
-//TODO: add more function call overloads here.
 struct App0
 {
     typedef App0 this_type;
 
-#ifdef BOOST_NO_VARIADIC_TEMPLATES
-    template< typename F
-            , typename A1
-            >
-    auto operator()( F f, A1 a1 ) const
-        -> decltype( sapp( f, boost::fusion::make_vector( a1 ) ) )
-    {
-        return sapp( f, boost::fusion::make_vector( a1 ) );
-    }
-
-    template< typename F
-            , typename A1
-            , typename A2
-            >
-    auto operator()( F f, A1 a1, A2 a2 ) const
-        -> decltype( sapp( f, boost::fusion::make_vector( a1, a2 ) )
-                   )
-    {
-        return sapp( f, boost::fusion::make_vector( a1, a2 ) );
-    }
-
-    template< typename F
-            , typename A1
-            , typename A2
-            , typename A3
-            >
-    auto operator()( F f, A1 a1, A2 a2, A3 a3 ) const
-        -> decltype( sapp( f, boost::fusion::make_vector( a1, a2, a3 ) )
-                   )
-    {
-        return sapp( f, boost::fusion::make_vector( a1, a2, a3 ) );
-    }
-#else
     template< typename F
             , typename... A
             >
@@ -153,7 +168,6 @@ struct App0
     {
         return sapp( f, boost::fusion::make_vector( a... ) );
     }
-#endif    
 } const app = App0();
 
 /** tdepth type function
