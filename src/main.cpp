@@ -203,3 +203,10 @@ int main()
               << '\n' << fact( 10 ) // ⇒ 3628800
               << '\n';
 }
+
+
+#define BOOST_TEST_MODULE odillo test suite
+#define BOOST_TEST_ALTERNATIVE_INIT_API
+#define BOOST_TEST_MAIN
+#define BOOST_TEST_NO_MAIN
+#include <boost/test/included/unit_test.hpp>
