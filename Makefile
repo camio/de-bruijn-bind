@@ -1,7 +1,7 @@
-BOOST_PATH="C:\\Documents and Settings\\David J. Sankel\\My Documents\\Sankel Software\\working\\boost_1_44_0x86"
+BOOST_PATH="../odillo_meta/boost"
 
-GPLUSPLUS=C:\\mingw-get-0.1-mingw32-alpha-3-bin\\bin\\g++
-# GPLUSPLUS=g++
+# GPLUSPLUS=C:\\mingw-get-0.1-mingw32-alpha-3-bin\\bin\\g++
+GPLUSPLUS=g++
 # See [1] for reasoning behind --enable-auto-import option.
 
 r: bin/main.exe
