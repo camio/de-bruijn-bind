@@ -67,7 +67,7 @@ For flip, I'm introducing subscripts on abstractions (λ) to indicate the
 number of arguments. For the variables (1,2,etc.) I use a subscript to indicate
 which argument of the abstraction it refers to.
 
-    flip = λx.λ(y,z).x(z,y) = λ₁λ₂1(1₁, 2₀)
+    flip = λx.λ(y,z).x(z,y) = λ₁λ₂2₁(1₂, 1₁)
 
 These terms can be directly translated into C++ code using this library (note
 that _1_1 is a synonym for arg<1,1>() and so on).
